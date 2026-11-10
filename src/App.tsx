@@ -5,12 +5,17 @@ function App() {
     <div className="container">
       <Card
         title="Card 1"
-        description="Primeira descrição."
+        description="Teste Teste Teste Teste Teste Teste Teste Teste Teste Teste Teste Teste Teste Teste Teste Teste Teste Teste Teste Teste "
         tag="Novo"
         buttonText="Ver mais"
         onButtonClick={() => alert("Clicou!")}
       />
-      <Card title="Card 2" description="Segunda descrição." />
+      <Card title="Card 2" 
+      description="Teste Teste Teste Teste Teste Teste Teste Teste Teste Teste Teste Teste Teste Teste Teste Teste Teste Teste Teste Teste" />
+      
+      <Card title="Card 3" 
+      description="Teste Teste Teste Teste Teste Teste Teste Teste Teste Teste Teste Teste Teste Teste Teste Teste Teste Teste Teste Teste" />
+    
     </div>
   );
 }
