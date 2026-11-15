@@ -1,4 +1,6 @@
 
+import Button from './components/Button';
+import Card from './components/Card';
 import { useForm } from 'react-hook-form';
 import { CampoEntrada } from './components/Field';
 
@@ -18,11 +20,14 @@ function App() {
     email: string;
   }>({ mode: 'onChange' });
 
+
   return (
-    
-    
-      <div className="p-8">
-        <div className="grid grid-cols-3 gap-4">
+    <div className="p-8">
+      <Card>
+        <form
+          onSubmit={(e) => e.preventDefault()}
+          className="grid grid-cols-1 md:grid-cols-4 gap-4 items-start"
+        >
           <CampoEntrada
             placeholder="Digite o nome"
             registro={register('nome', {
@@ -31,7 +36,6 @@ function App() {
             erro={errors.nome}
           />
 
-        
           <CampoEntrada
             type="text"
             inputMode="numeric"
@@ -58,22 +62,30 @@ function App() {
           />
 
           <CampoEntrada
-              type="email"
-              placeholder="Digite o e-mail"
-              registro={register('email', {
-                required: 'E-mail é obrigatório',
-                pattern: {
-                  value: /^[^\s@]+@[^\s@]+\.[^\s@]+$/,
-                  message: 'Digite um e-mail válido',
-                },
-              })}
-              erro={errors.email}
-            />
+            type="email"
+            placeholder="Digite o e-mail"
+            registro={register('email', {
+              required: 'E-mail é obrigatório',
+              pattern: {
+                value: /^[^\s@]+@[^\s@]+\.[^\s@]+$/,
+                message: 'Digite um e-mail válido',
+              },
+            })}
+            erro={errors.email}
+          />
 
-        
-      </div>
+          <Button
+            type="submit"
+            variant="enviar"
+            className="w-full"
+          >
+            Enviar
+          </Button>
+        </form>
+      </Card>
     </div>
   );
+
 }
 
 export default App;
