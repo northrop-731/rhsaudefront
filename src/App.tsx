@@ -2,6 +2,8 @@ import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { ArrowLeft, Check, RotateCcw, UserRound } from 'lucide-react';
 
+// Importa os componentes visuais da pasta components para montar a página.
+// A hierarquia visual funciona assim: FormSection (usa Card) -> FormGroup (usa Label) -> CampoEntrada / CampoSelecao.
 import Button from './components/Button';
 import Card from './components/Card';
 import { CampoEntrada } from './components/Field';
@@ -10,8 +12,9 @@ import { FormSection } from './components/FormSection';
 import { Indicator } from './components/Indicator';
 import { CampoSelecao } from './components/Select';
 
-// Campos do schema principal. O backend também define estruturas opcionais
-// (dadosPessoais, contatos, endereco e lotacoes).
+// Tipagem plana de todos os campos controlados pelo formulário.
+// No momento do submit (onSubmit), esses dados planos são transformados e agrupados
+// nas estruturas aninhadas que o backend espera (contatos, endereco e lotacoes).
 interface ServidorFormData {
   nome: string;
   cpf: string;
@@ -29,6 +32,7 @@ interface ServidorFormData {
   conselho: string;
   n_conselho: string;
   lotacao: string;
+  c_custo: string;
   c_horaria: string;
   horas_trab: string;
   status: string;
@@ -50,11 +54,12 @@ interface ServidorFormData {
   description: string;
 }
 
+// Valores padrão usados na inicialização do useForm e também no botão "Limpar" (reset).
 const initialValues: ServidorFormData = {
   nome: '', cpf: '', rg: '', nascimento: '', genero: '', cnh: '',
   matricula: '', pis: '', dt_admissao: '', funcao: '',
   especialidade: '', area: '', diretoria: '', conselho: '',
-  n_conselho: '', lotacao: '', c_horaria: '', horas_trab: '',
+  n_conselho: '', lotacao: '', c_custo: '', c_horaria: '', horas_trab: '',
   status: 'NORMAL', active: true, e_ponto: true,
   dataInicioLotacao: '', dataTerminoLotacao: '',
   tel_1: '', tel_2: '', p_email: '', co_email: '',
@@ -62,9 +67,12 @@ const initialValues: ServidorFormData = {
   bairro: '', cidade: '', uf: '', description: '',
 };
 
+// Função utilitária que remove tudo que não for dígito e limita a quantidade de caracteres.
+// Serve de base para todas as funções de máscara abaixo.
 const onlyDigits = (text: string, limit: number) =>
   text.replace(/\D/g, '').slice(0, limit);
 
+// Aplica máscara de CPF: 000.000.000-00
 function maskCPF(text: string): string {
   const d = onlyDigits(text, 11);
   return d.slice(0, 3)
@@ -73,6 +81,7 @@ function maskCPF(text: string): string {
     + (d.length > 9 ? `-${d.slice(9)}` : '');
 }
 
+// Aplica máscara de PIS: 000.00000.00-0
 function maskPIS(text: string): string {
   const d = onlyDigits(text, 11);
   return d.slice(0, 3)
@@ -81,6 +90,7 @@ function maskPIS(text: string): string {
     + (d.length > 10 ? `-${d.slice(10)}` : '');
 }
 
+// Aplica máscara de telefone fixo (10 dígitos) ou celular (11 dígitos): (00) 00000-0000
 function maskPhone(text: string): string {
   const d = onlyDigits(text, 11);
   if (d.length <= 2) return d ? `(${d}` : '';
@@ -89,6 +99,7 @@ function maskPhone(text: string): string {
     + (d.length > split ? `-${d.slice(split)}` : '');
 }
 
+// Aplica máscara de CEP: 00000-000
 function maskCEP(text: string): string {
   const d = onlyDigits(text, 8);
   return d.slice(0, 5) + (d.length > 5 ? `-${d.slice(5)}` : '');
@@ -98,7 +109,11 @@ const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const fieldClass = 'min-h-10 text-sm text-slate-800 placeholder:text-slate-400';
 
 export default function App() {
+  // Controla a exibição do banner amarelo de confirmação após o submit.
   const [submitted, setSubmitted] = useState(false);
+
+  // Inicializa o react-hook-form com validação em tempo real (mode: 'onChange').
+  // O objeto 'errors' é repassado para cada CampoEntrada/CampoSelecao para exibir erros de validação.
   const {
     register,
     setValue,
@@ -111,10 +126,13 @@ export default function App() {
     defaultValues: initialValues,
   });
 
-  const [nome, matricula, funcao, lotacao, active, cHoraria, horasTrabalhadas] =
-    watch(['nome', 'matricula', 'funcao', 'lotacao', 'active', 'c_horaria', 'horas_trab']);
+  // Observa em tempo real os campos principais para atualizar o Card lateral de "Resumo do cadastro"
+  // conforme o usuário digita no formulário.
+  const [nome, matricula, funcao, lotacao, centroCusto, active, cHoraria, horasTrabalhadas] =
+    watch(['nome', 'matricula', 'funcao', 'lotacao', 'c_custo', 'active', 'c_horaria', 'horas_trab']);
 
-  // Mantém as máscaras visíveis no input e sincronizadas ao React Hook Form.
+  // Intercepta o evento onChange dos campos com máscara, formata o valor no elemento HTML
+  // e sincroniza o resultado no estado do react-hook-form disparando a validação em seguida.
   const formattedChange = (
     field: 'cpf' | 'pis' | 'tel_1' | 'tel_2' | 'cep',
     formatter: (value: string) => string,
@@ -124,8 +142,8 @@ export default function App() {
     setValue(field, result, { shouldDirty: true, shouldValidate: true });
   };
 
-  // Exemplo de montagem de payload. Não faz POST: ainda faltam a rota
-  // da API e a regra de origem do campo obrigatório c_custo.
+  // Executado quando o formulário passa por todas as validações e o usuário clica em "Cadastrar servidor".
+  // Converte campos numéricos e agrupa os dados planos em objetos/arrays aninhados para a API.
   const onSubmit = (data: ServidorFormData) => {
     const { complemento, dataInicioLotacao, dataTerminoLotacao, ...root } = data;
     const payload = {
@@ -134,12 +152,14 @@ export default function App() {
       c_horaria: Number(data.c_horaria),
       n_end: Number(data.n_end),
       cep: Number(onlyDigits(data.cep, 8)),
+      // Agrupa os telefones em um array de objetos, incluindo o secundário apenas se preenchido
       contatos: [
         { tipo: 'Celular', numero: data.tel_1, principal: true },
         ...(data.tel_2
           ? [{ tipo: 'Celular', numero: data.tel_2, principal: false }]
           : []),
       ],
+      // Monta o objeto estruturado de endereço
       endereco: {
         logradouro: data.end,
         numero: Number(data.n_end),
@@ -149,6 +169,7 @@ export default function App() {
         uf: data.uf,
         cep: Number(onlyDigits(data.cep, 8)),
       },
+      // Inclui o histórico inicial de lotação apenas se a data de início for informada
       ...(dataInicioLotacao
         ? {
             lotacoes: [{
@@ -162,10 +183,11 @@ export default function App() {
         : {}),
     };
 
-    console.log('Prévia do payload (ainda sem c_custo):', payload);
+    console.log('Prévia do payload:', payload);
     setSubmitted(true);
   };
 
+  // Extrai as iniciais dos dois primeiros nomes do servidor para mostrar no avatar do resumo lateral.
   const initials = nome.trim()
     ? nome.trim().split(/\s+/).slice(0, 2).map((part) => part[0].toUpperCase()).join('')
     : 'SV';
@@ -177,6 +199,7 @@ export default function App() {
           Gestão de pessoas / Servidores / Novo cadastro
         </div>
 
+        {/* Cabeçalho da página com botão de voltar usando o componente Button */}
         <div className="mb-5 flex flex-wrap items-start justify-between gap-3">
           <div>
             <h1 className="text-2xl font-bold tracking-tight text-slate-900">
@@ -196,9 +219,12 @@ export default function App() {
           <span className="text-xs text-slate-500">* Campos obrigatórios</span>
         </div>
 
+        {/* Formulário principal conectado ao handleSubmit do react-hook-form */}
         <form onSubmit={handleSubmit(onSubmit)} noValidate>
+          {/* Grid de 2 colunas no desktop: coluna principal para as seções e coluna lateral (280px) para o resumo */}
           <div className="grid items-start gap-5 lg:grid-cols-[minmax(0,1fr)_280px]">
             <div className="flex min-w-0 flex-col gap-5">
+              {/* Seção 1: Dados pessoais */}
               <FormSection title="Dados pessoais" subtitle="Identificação e dados cadastrais do servidor">
                 <div className="grid grid-cols-1 gap-x-4 sm:grid-cols-2 lg:grid-cols-3">
                   <FormGroup label="Nome completo" htmlFor="nome" required className="sm:col-span-2 lg:col-span-3">
@@ -240,6 +266,7 @@ export default function App() {
                 </div>
               </FormSection>
 
+              {/* Seção 2: Dados funcionais */}
               <FormSection title="Dados funcionais" subtitle="Informações de vínculo e identificação funcional">
                 <div className="grid grid-cols-1 gap-x-4 sm:grid-cols-2 lg:grid-cols-3">
                   <FormGroup label="Matrícula" htmlFor="matricula" required>
@@ -288,11 +315,17 @@ export default function App() {
                 </div>
               </FormSection>
 
+              {/* Seção 3: Lotação e jornada */}
               <FormSection title="Lotação e jornada" subtitle="Unidade, carga horária e situação administrativa">
                 <div className="grid grid-cols-1 gap-x-4 sm:grid-cols-2 lg:grid-cols-3">
                   <FormGroup label="Lotação / unidade" htmlFor="lotacao" required className="sm:col-span-2">
                     <CampoEntrada id="lotacao" placeholder="Ex.: UBS Jardim Imperial" className={fieldClass}
                       registro={register('lotacao', { required: 'Lotação é obrigatória' })} erro={errors.lotacao} />
+                  </FormGroup>
+                  <FormGroup label="Centro de custo" htmlFor="c_custo" required>
+                    <CampoEntrada id="c_custo" placeholder="Ex.: 10.02.01" className={fieldClass}
+                      registro={register('c_custo', { required: 'Centro de custo é obrigatório' })}
+                      erro={errors.c_custo} />
                   </FormGroup>
                   <FormGroup label="Carga horária semanal" htmlFor="c_horaria" required>
                     <CampoEntrada id="c_horaria" type="number" min={1} step={1} placeholder="40" className={fieldClass}
@@ -313,6 +346,7 @@ export default function App() {
                     <CampoEntrada id="dataInicioLotacao" type="date" className={fieldClass}
                       registro={register('dataInicioLotacao')} erro={errors.dataInicioLotacao} />
                   </FormGroup>
+                  {/* Validação cruzada: exige dataInicioLotacao caso o usuário preencha dataTerminoLotacao */}
                   <FormGroup label="Término da lotação (opcional)" htmlFor="dataTerminoLotacao">
                     <CampoEntrada id="dataTerminoLotacao" type="date" className={fieldClass}
                       registro={register('dataTerminoLotacao', {
@@ -320,6 +354,7 @@ export default function App() {
                           !value || !!form.dataInicioLotacao || 'Informe também o início da lotação',
                       })} erro={errors.dataTerminoLotacao} />
                   </FormGroup>
+                  {/* Checkboxes booleanos controlados diretamente pelo register */}
                   <div className="flex flex-wrap items-center gap-6 pb-4 sm:col-span-2 lg:col-span-3">
                     <label className="inline-flex items-center gap-2 text-sm text-slate-700">
                       <input type="checkbox" className="size-4 accent-teal-600" {...register('active')} />
@@ -336,6 +371,7 @@ export default function App() {
                   description="Confira a unidade, a carga horária e a situação do servidor. As referências de lotação por ID dependem dos cadastros disponíveis na API." />
               </FormSection>
 
+              {/* Seção 4: Contato */}
               <FormSection title="Contato" subtitle="Telefones e endereços de e-mail">
                 <div className="grid grid-cols-1 gap-x-4 sm:grid-cols-2">
                   <FormGroup label="Telefone principal" htmlFor="tel_1" required>
@@ -368,6 +404,7 @@ export default function App() {
                 </div>
               </FormSection>
 
+              {/* Seção 5: Endereço */}
               <FormSection title="Endereço" subtitle="Localização residencial do servidor">
                 <div className="grid grid-cols-1 gap-x-4 sm:grid-cols-2 lg:grid-cols-3">
                   <FormGroup label="CEP" htmlFor="cep" required>
@@ -401,6 +438,7 @@ export default function App() {
                     <CampoEntrada id="cidade" placeholder="Cidade" className={fieldClass}
                       registro={register('cidade', { required: 'Cidade é obrigatória' })} erro={errors.cidade} />
                   </FormGroup>
+                  {/* Converte automaticamente a sigla do estado para letras maiúsculas durante a digitação */}
                   <FormGroup label="UF" htmlFor="uf" required>
                     <CampoEntrada id="uf" maxLength={2} placeholder="SP" className={fieldClass}
                       registro={register('uf', {
@@ -416,6 +454,7 @@ export default function App() {
                 </div>
               </FormSection>
 
+              {/* Seção 6: Observações */}
               <FormSection title="Observações" subtitle="Informações complementares (opcional)">
                 <FormGroup label="Descrição" htmlFor="description">
                   <CampoEntrada id="description" placeholder="Observações sobre o cadastro" className={fieldClass}
@@ -424,6 +463,7 @@ export default function App() {
               </FormSection>
             </div>
 
+            {/* Painel lateral fixo (sticky) que exibe em tempo real os dados monitorados via watch() */}
             <aside className="flex flex-col gap-4 lg:sticky lg:top-5">
               <Card>
                 <h2 className="mb-4 text-base font-semibold">Resumo do cadastro</h2>
@@ -438,6 +478,7 @@ export default function App() {
                 <dl className="space-y-4 text-sm">
                   <div><dt className="text-xs text-slate-500">Matrícula</dt><dd>{matricula || 'Não informada'}</dd></div>
                   <div><dt className="text-xs text-slate-500">Unidade de destino</dt><dd className="break-words">{lotacao || 'Não informada'}</dd></div>
+                  <div><dt className="text-xs text-slate-500">Centro de custo</dt><dd className="break-words">{centroCusto || 'Não informado'}</dd></div>
                   <div><dt className="text-xs text-slate-500">Função</dt><dd className="break-words">{funcao || 'Não informada'}</dd></div>
                   <div><dt className="text-xs text-slate-500">Carga horária</dt><dd>{cHoraria ? `${cHoraria}h semanais` : 'Não informada'}</dd></div>
                   <div><dt className="text-xs text-slate-500">Horário</dt><dd className="break-words">{horasTrabalhadas || 'Não informado'}</dd></div>
@@ -452,6 +493,7 @@ export default function App() {
             </aside>
           </div>
 
+          {/* Barra inferior de ações: botão Limpar restaura os initialValues e botão Cadastrar dispara o onSubmit */}
           <div className="mt-5 flex flex-wrap items-center justify-between gap-3 rounded-xl border border-slate-200 bg-white px-5 py-4 shadow-sm">
             <p className="text-xs text-slate-500">Confira os dados antes de concluir o cadastro.</p>
             <div className="flex flex-wrap gap-2">
@@ -470,7 +512,7 @@ export default function App() {
                 size="banner"
                 variant="warning"
                 message="Formulário validado (sem envio à API)"
-                description="O payload está no console. Para cadastrar, conecte a rota POST e resolva o campo c_custo, obrigatório no schema."
+                description="O payload, incluindo c_custo, está no console. Para cadastrar, conecte a rota POST da API."
               />
             </div>
           )}

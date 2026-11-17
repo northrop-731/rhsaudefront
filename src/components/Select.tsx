@@ -1,4 +1,3 @@
-
 import type { SelectHTMLAttributes } from 'react';
 import type {
   UseFormRegisterReturn,
@@ -10,6 +9,8 @@ interface Option {
   label: string;
 }
 
+// Segue o mesmo padrão do Field.tsx (CampoEntrada), recebendo o registro e o erro do react-hook-form,
+// além da lista de opções que serão renderizadas no dropdown.
 interface SelectProps extends SelectHTMLAttributes<HTMLSelectElement> {
   registro: UseFormRegisterReturn;
   erro?: FieldError;
@@ -17,6 +18,8 @@ interface SelectProps extends SelectHTMLAttributes<HTMLSelectElement> {
   placeholder?: string;
 }
 
+// Select padrão integrado ao react-hook-form.
+// Usado dentro de um FormGroup no App.tsx (ex.: seleção de gênero).
 export const CampoSelecao = ({
   registro,
   erro,
@@ -43,10 +46,12 @@ export const CampoSelecao = ({
           ${className}
         `}
       >
+        {/* Opção inicial vazia e desabilitada para forçar a escolha quando o campo for obrigatório */}
         <option value="" disabled>
           {placeholder}
         </option>
 
+        {/* Mapeia o array de opções passado via props */}
         {options.map((option) => (
           <option key={option.value} value={option.value}>
             {option.label}
@@ -54,6 +59,7 @@ export const CampoSelecao = ({
         ))}
       </select>
 
+      {/* Exibe a mensagem de erro do react-hook-form abaixo do select */}
       {erro && (
         <span
           className="block text-red-500 text-xs mt-1"

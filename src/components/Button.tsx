@@ -1,4 +1,3 @@
-
 import type {
   ButtonHTMLAttributes,
   ReactNode,
@@ -6,6 +5,8 @@ import type {
 
 import type { LucideIcon } from 'lucide-react';
 
+// Estende os atributos nativos do botão HTML para aceitar onClick, disabled, etc.
+// É usado no App.tsx para ações de navegação, reset do formulário e envio (submit).
 interface ButtonProps
   extends ButtonHTMLAttributes<HTMLButtonElement> {
   children: ReactNode;
@@ -19,6 +20,7 @@ interface ButtonProps
   iconPosition?: 'left' | 'right';
 }
 
+// Mapeia cada variante para suas respectivas classes de cor do Tailwind.
 const colors = {
   enviar: 'bg-teal-600 text-white hover:bg-teal-700',
   verificar: 'bg-sky-600 text-white hover:bg-sky-700',
@@ -27,6 +29,8 @@ const colors = {
   neutral: 'bg-gray-200 text-gray-800 hover:bg-gray-300',
 };
 
+// Componente de botão padrão da aplicação.
+// Define type="button" por padrão para evitar que botões comuns disparem o submit do formulário no App.tsx.
 export function Button({
   children,
   variant = 'enviar',
@@ -50,12 +54,14 @@ export function Button({
       `}
       {...rest}
     >
+      {/* Renderiza o ícone à esquerda do texto se iconPosition for 'left' */}
       {Icon && iconPosition === 'left' && (
         <Icon size={16} aria-hidden="true" />
       )}
 
       {children}
 
+      {/* Renderiza o ícone à direita do texto se iconPosition for 'right' */}
       {Icon && iconPosition === 'right' && (
         <Icon size={16} aria-hidden="true" />
       )}

@@ -1,4 +1,3 @@
-
 import {
   Info,
   CheckCircle,
@@ -14,6 +13,7 @@ type IndicatorVariant =
   | 'info'
   | 'neutral';
 
+// Define os dois formatos de exibição: etiqueta curta (badge) ou aviso em bloco (banner).
 type IndicatorSize = 'badge' | 'banner';
 
 interface IndicatorProps {
@@ -24,6 +24,7 @@ interface IndicatorProps {
   className?: string;
 }
 
+// Paleta de cores de fundo e texto para cada status.
 const colors = {
   success: 'bg-emerald-50 text-emerald-700',
   warning: 'bg-amber-50 text-amber-700',
@@ -32,6 +33,7 @@ const colors = {
   neutral: 'bg-gray-100 text-gray-700',
 };
 
+// Ícone correspondente a cada variante (usado quando size="banner").
 const icons = {
   success: CheckCircle,
   warning: AlertTriangle,
@@ -40,6 +42,9 @@ const icons = {
   neutral: Circle,
 };
 
+// Componente de feedback visual.
+// No App.tsx, o modo 'badge' mostra o status do rascunho e se o servidor está Ativo/Inativo no resumo lateral.
+// O modo 'banner' exibe avisos sobre regras de negócio (lotação, RH) e confirmação de validação do formulário.
 export function Indicator({
   message,
   description,
@@ -49,27 +54,30 @@ export function Indicator({
 }: IndicatorProps) {
   const Icon = icons[variant];
 
+  // Formato largo com ícone, título e descrição opcional.
   if (size === 'banner') {
-  return (
-    <div
-      className={`flex w-full items-start gap-3 rounded-md px-4 py-3 ${colors[variant]} ${className}`}
-    >
-      <Icon size={18} className="mt-0.5 shrink-0" />
+    return (
+      <div
+        className={`flex w-full items-start gap-3 rounded-md px-4 py-3 ${colors[variant]} ${className}`}
+      >
+        <Icon size={18} className="mt-0.5 shrink-0" />
 
-      <div className="flex flex-col gap-1">
-        <span className="text-sm font-semibold">
-          {message}
-        </span>
+        <div className="flex flex-col gap-1">
+          <span className="text-sm font-semibold">
+            {message}
+          </span>
 
-        {description && (
-          <p className="text-xs leading-relaxed">
-            {description}
-          </p>
-        )}
+          {description && (
+            <p className="text-xs leading-relaxed">
+              {description}
+            </p>
+          )}
+        </div>
       </div>
-    </div>
-  );
-}
+    );
+  }
+
+  // Formato compacto com bolinha colorida e texto curto.
   if (size === 'badge') {
     return (
       <span
@@ -83,6 +91,7 @@ export function Indicator({
     );
   }
 
+  // Fallback padrão caso size não caia nas condições anteriores.
   return (
     <div
       role="status"
