@@ -299,10 +299,6 @@ export default function CadastroServidorPage() {
                     <CampoEntrada id="especialidade" placeholder="Especialidade" className={fieldClass}
                       registro={register('especialidade', { required: 'Especialidade é obrigatória' })} erro={errors.especialidade} />
                   </FormGroup>
-                  <FormGroup label="Área de atuação" htmlFor="area" required>
-                    <CampoEntrada id="area" placeholder="Ex.: Enfermagem" className={fieldClass}
-                      registro={register('area', { required: 'Área de atuação é obrigatória' })} erro={errors.area} />
-                  </FormGroup>
                   <FormGroup label="Diretoria" htmlFor="diretoria" required>
                     <CampoEntrada id="diretoria" placeholder="Diretoria" className={fieldClass}
                       registro={register('diretoria', { required: 'Diretoria é obrigatória' })} erro={errors.diretoria} />
@@ -325,11 +321,7 @@ export default function CadastroServidorPage() {
                     <CampoEntrada id="lotacao" placeholder="Ex.: UBS Jardim Imperial" className={fieldClass}
                       registro={register('lotacao', { required: 'Lotação é obrigatória' })} erro={errors.lotacao} />
                   </FormGroup>
-                  <FormGroup label="Centro de custo" htmlFor="c_custo" required>
-                    <CampoEntrada id="c_custo" placeholder="Ex.: 10.02.01" className={fieldClass}
-                      registro={register('c_custo', { required: 'Centro de custo é obrigatório' })}
-                      erro={errors.c_custo} />
-                  </FormGroup>
+                  
                   <FormGroup label="Carga horária semanal" htmlFor="c_horaria" required>
                     <CampoEntrada id="c_horaria" type="number" min={0} step={10} placeholder="0" className={fieldClass}
                       registro={register('c_horaria', {
@@ -371,7 +363,7 @@ export default function CadastroServidorPage() {
                 </div>
                 <Indicator size="banner" variant="info"
                   message="Informações de lotação"
-                  description="Confira a unidade, a carga horária e a situação do servidor. As referências de lotação por ID dependem dos cadastros disponíveis na API." />
+                  description="Confira a unidade, a carga horária e a situação do servidor." />
               </FormSection>
 
               {/* Seção 4: Contato */}
@@ -501,7 +493,7 @@ export default function CadastroServidorPage() {
                 size="banner"
                 variant="info"
                 message="Cadastro sob gestão do RH"
-                description="Os dados pessoais, a função, a lotação e o status podem ser administrados nesta tela. Os campos de classificação devem ser conciliados com os cadastros da API."
+                description="Os dados pessoais, a função, a lotação e o status podem ser administrados nesta tela."
               />
             </aside>
           </div>

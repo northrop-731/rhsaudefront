@@ -2,15 +2,18 @@
 import { useState, type SyntheticEvent } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { LockKeyhole, UserRound, LogIn } from 'lucide-react';
+import useAuth from "../../hooks/useAuth";
 
 export function LoginPage() {
   const navigate = useNavigate();
-
+  const { signIn } = useAuth();
   const [usuario, setUsuario] = useState('');
   const [senha, setSenha] = useState('');
 
-  function handleLogin(event: SyntheticEvent<HTMLFormElement, SubmitEvent>) {
+  async function handleLogin(event: SyntheticEvent<HTMLFormElement, SubmitEvent>) {
+  
     event.preventDefault();
+    await signIn(data);
 
     // login de mock.
     navigate('/app/servidores');
