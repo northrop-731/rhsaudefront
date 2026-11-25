@@ -1,7 +1,9 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { ArrowLeft, Check, RotateCcw, UserRound } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import { api } from '../../services/api';
+import axios from 'axios';
 
 // Importa os componentes visuais da pasta components para montar a página.
 // A hierarquia visual funciona assim: FormSection (usa Card) -> FormGroup (usa Label) -> CampoEntrada / CampoSelecao.
@@ -16,6 +18,12 @@ import { CampoSelecao } from '../../components/Select';
 // Tipagem plana de todos os campos controlados pelo formulário.
 // No momento do submit (onSubmit), esses dados planos são transformados e agrupados
 // nas estruturas aninhadas que o backend espera (contatos, endereco e lotacoes).
+
+interface OpcaoCatalogo {
+  _id: string;
+  desc: string;
+}
+
 interface ServidorFormData {
   nome: string;
   cpf: string;
@@ -33,7 +41,6 @@ interface ServidorFormData {
   conselho: string;
   n_conselho: string;
   lotacao: string;
-  c_custo: string;
   c_horaria: string;
   horas_trab: string;
   status: string;
@@ -60,8 +67,8 @@ const initialValues: ServidorFormData = {
   nome: '', cpf: '', rg: '', nascimento: '', genero: '', cnh: '',
   matricula: '', pis: '', dt_admissao: '', funcao: '',
   especialidade: '', area: '', diretoria: '', conselho: '',
-  n_conselho: '', lotacao: '', c_custo: '', c_horaria: '', horas_trab: '',
-  status: 'NORMAL', active: true, e_ponto: true,
+  n_conselho: '', lotacao: '', c_horaria: '', horas_trab: '',
+  status: 'Normal', active: true, e_ponto: true,
   dataInicioLotacao: '', dataTerminoLotacao: '',
   tel_1: '', tel_2: '', p_email: '', co_email: '',
   cep: '', end: '', n_end: '', complemento: '',
@@ -113,6 +120,43 @@ export default function CadastroServidorPage() {
   // Controla a exibição do banner amarelo de confirmação após o submit.
   const [submitted, setSubmitted] = useState(false);
 
+  const [erroCadastro, setErroCadastro] = useState('');
+
+  const [catalogos, setCatalogos] = useState({
+    funcoes: [] as OpcaoCatalogo[],
+    especialidades: [] as OpcaoCatalogo[],
+    diretorias: [] as OpcaoCatalogo[],
+    lotacoes: [] as OpcaoCatalogo[],
+  });
+
+  useEffect(() => {
+    async function carregarCatalogos() {
+      try {
+        const [funcoes, especialidades, diretorias, lotacoes] =
+          await Promise.all([
+            api.get<OpcaoCatalogo[]>('/funcao'),
+            api.get<OpcaoCatalogo[]>('/especialidade'),
+            api.get<OpcaoCatalogo[]>('/diretoria'),
+            api.get<OpcaoCatalogo[]>('/lotacao'),
+          ]);
+
+        setCatalogos({
+          funcoes: funcoes.data,
+          especialidades: especialidades.data,
+          diretorias: diretorias.data,
+          lotacoes: lotacoes.data,
+        });
+      } catch (error) {
+        console.error('Erro ao carregar catálogos:', error);
+        setErroCatalogos('Não foi possível carregar as opções do cadastro.');
+      }
+    }
+
+    carregarCatalogos();
+  }, []);
+
+  const [erroCatalogos, setErroCatalogos] = useState('');
+  
   const navigate = useNavigate();
 
   // Inicializa o react-hook-form com validação em tempo real (mode: 'onChange').
@@ -131,8 +175,8 @@ export default function CadastroServidorPage() {
 
   // Observa em tempo real os campos principais para atualizar o Card lateral de "Resumo do cadastro"
   // conforme o usuário digita no formulário.
-  const [nome, matricula, funcao, lotacao, centroCusto, active, cHoraria, horasTrabalhadas] =
-    watch(['nome', 'matricula', 'funcao', 'lotacao', 'c_custo', 'active', 'c_horaria', 'horas_trab']);
+  const [nome, matricula, funcao, lotacao, active, cHoraria, horasTrabalhadas] =
+    watch(['nome', 'matricula', 'funcao', 'lotacao', 'active', 'c_horaria', 'horas_trab']);
 
   // Intercepta o evento onChange dos campos com máscara, formata o valor no elemento HTML
   // e sincroniza o resultado no estado do react-hook-form disparando a validação em seguida.
@@ -147,48 +191,34 @@ export default function CadastroServidorPage() {
 
   // Executado quando o formulário passa por todas as validações e o usuário clica em "Cadastrar servidor".
   // Converte campos numéricos e agrupa os dados planos em objetos/arrays aninhados para a API.
-  const onSubmit = (data: ServidorFormData) => {
-    const { complemento, dataInicioLotacao, dataTerminoLotacao, ...root } = data;
-    const payload = {
-      ...root,
-      matricula: Number(data.matricula),
-      c_horaria: Number(data.c_horaria),
-      n_end: Number(data.n_end),
-      cep: Number(onlyDigits(data.cep, 8)),
-      // Agrupa os telefones em um array de objetos, incluindo o secundário apenas se preenchido
-      contatos: [
-        { tipo: 'Celular', numero: data.tel_1, principal: true },
-        ...(data.tel_2
-          ? [{ tipo: 'Celular', numero: data.tel_2, principal: false }]
-          : []),
-      ],
-      // Monta o objeto estruturado de endereço
-      endereco: {
-        logradouro: data.end,
-        numero: Number(data.n_end),
-        complemento,
-        bairro: data.bairro,
-        cidade: data.cidade,
-        uf: data.uf,
-        cep: Number(onlyDigits(data.cep, 8)),
-      },
-      // Inclui o histórico inicial de lotação apenas se a data de início for informada
-      ...(dataInicioLotacao
-        ? {
-            lotacoes: [{
-              cargaHorariaSemanal: Number(data.c_horaria),
-              horasTrabalhadas: data.horas_trab,
-              status: data.active ? 'ATIVO' : 'INATIVO',
-              dataInicio: dataInicioLotacao,
-              dataTermino: dataTerminoLotacao || null,
-            }],
-          }
-        : {}),
-    };
 
-    console.log('Prévia do payload:', payload);
-    setSubmitted(true);
+  const onSubmit = async (data: ServidorFormData) => {
+    setSubmitted(false);
+    setErroCadastro('');
+
+    try {
+      await api.post('/servidores', {
+        ...data,
+        c_horaria: Number(data.c_horaria),
+        n_end: Number(data.n_end),
+        cep: onlyDigits(data.cep, 8),
+      });
+
+      setSubmitted(true);
+    } catch (error) {
+      console.error('Erro ao cadastrar servidor:', error);
+
+      if (axios.isAxiosError<{ message?: string }>(error)) {
+        setErroCadastro(
+          error.response?.data?.message ||
+          'Não foi possível cadastrar o servidor.'
+        );
+      } else {
+        setErroCadastro('Erro inesperado ao cadastrar servidor.');
+      }
+    }
   };
+
 
   // Extrai as iniciais dos dois primeiros nomes do servidor para mostrar no avatar do resumo lateral.
   const initials = nome.trim()
@@ -227,6 +257,13 @@ export default function CadastroServidorPage() {
           {/* Grid de 2 colunas no desktop: coluna principal para as seções e coluna lateral (280px) para o resumo */}
           <div className="grid items-start gap-5 lg:grid-cols-[minmax(0,1fr)_280px]">
             <div className="flex min-w-0 flex-col gap-5">
+
+              {erroCatalogos && (
+                <p className="mb-4 text-sm text-red-600" role="alert">
+                  {erroCatalogos}
+                </p>
+              )}
+
               {/* Seção 1: Dados pessoais */}
               <FormSection title="Dados pessoais" subtitle="Identificação e dados cadastrais do servidor">
                 <div className="grid grid-cols-1 gap-x-4 sm:grid-cols-2 lg:grid-cols-3">
@@ -291,17 +328,64 @@ export default function CadastroServidorPage() {
                     <CampoEntrada id="dt_admissao" type="date" className={fieldClass}
                       registro={register('dt_admissao', { required: 'Data de admissão é obrigatória' })} erro={errors.dt_admissao} />
                   </FormGroup>
+
                   <FormGroup label="Função" htmlFor="funcao" required>
-                    <CampoEntrada id="funcao" placeholder="Ex.: Técnica de enfermagem" className={fieldClass}
-                      registro={register('funcao', { required: 'Função é obrigatória' })} erro={errors.funcao} />
+                    <CampoSelecao
+                      id="funcao"
+                      className={fieldClass}
+                      placeholder="Selecione a função"
+                      options={catalogos.funcoes.map((item) => ({
+                        value: item._id,
+                        label: item.desc,
+                      }))}
+                      registro={register('funcao', {
+                        required: 'Função é obrigatória',
+                      })}
+                      erro={errors.funcao}
+                    />
                   </FormGroup>
+
                   <FormGroup label="Especialidade" htmlFor="especialidade" required>
-                    <CampoEntrada id="especialidade" placeholder="Especialidade" className={fieldClass}
-                      registro={register('especialidade', { required: 'Especialidade é obrigatória' })} erro={errors.especialidade} />
+                    <CampoSelecao
+                      id="especialidade"
+                      className={fieldClass}
+                      placeholder="Selecione a especialidade"
+                      options={catalogos.especialidades.map((item) => ({
+                        value: item._id,
+                        label: item.desc,
+                      }))}
+                      registro={register('especialidade', {
+                        required: 'Especialidade é obrigatória',
+                      })}
+                      erro={errors.especialidade}
+                    />
                   </FormGroup>
+
                   <FormGroup label="Diretoria" htmlFor="diretoria" required>
-                    <CampoEntrada id="diretoria" placeholder="Diretoria" className={fieldClass}
-                      registro={register('diretoria', { required: 'Diretoria é obrigatória' })} erro={errors.diretoria} />
+                    <CampoSelecao
+                      id="diretoria"
+                      className={fieldClass}
+                      placeholder="Selecione a diretoria"
+                      options={catalogos.diretorias.map((item) => ({
+                        value: item._id,
+                        label: item.desc,
+                      }))}
+                      registro={register('diretoria', {
+                        required: 'Diretoria é obrigatória',
+                      })}
+                      erro={errors.diretoria}
+                    />
+                  </FormGroup>
+                  <FormGroup label="Área" htmlFor="area" required>
+                    <CampoEntrada
+                      id="area"
+                      placeholder="Ex.: Enfermagem"
+                      className={fieldClass}
+                      registro={register('area', {
+                        required: 'Área é obrigatória'
+                      })}
+                      erro={errors.area}
+                    />
                   </FormGroup>
                   <FormGroup label="Conselho profissional (opcional)" htmlFor="conselho">
                     <CampoEntrada id="conselho" placeholder="Ex.: COREN" className={fieldClass}
@@ -317,10 +401,28 @@ export default function CadastroServidorPage() {
               {/* Seção 3: Lotação e jornada */}
               <FormSection title="Lotação e jornada" subtitle="Unidade, carga horária e situação administrativa">
                 <div className="grid grid-cols-1 gap-x-4 sm:grid-cols-2 lg:grid-cols-3">
-                  <FormGroup label="Lotação / unidade" htmlFor="lotacao" required className="sm:col-span-2">
-                    <CampoEntrada id="lotacao" placeholder="Ex.: UBS Jardim Imperial" className={fieldClass}
-                      registro={register('lotacao', { required: 'Lotação é obrigatória' })} erro={errors.lotacao} />
+
+                  <FormGroup
+                    label="Lotação / unidade"
+                    htmlFor="lotacao"
+                    required
+                    className="sm:col-span-2"
+                  >
+                    <CampoSelecao
+                      id="lotacao"
+                      className={fieldClass}
+                      placeholder="Selecione a lotação"
+                      options={catalogos.lotacoes.map((item) => ({
+                        value: item._id,
+                        label: item.desc,
+                      }))}
+                      registro={register('lotacao', {
+                        required: 'Lotação é obrigatória',
+                      })}
+                      erro={errors.lotacao}
+                    />
                   </FormGroup>
+
                   
                   <FormGroup label="Carga horária semanal" htmlFor="c_horaria" required>
                     <CampoEntrada id="c_horaria" type="number" min={0} step={10} placeholder="0" className={fieldClass}
@@ -334,8 +436,25 @@ export default function CadastroServidorPage() {
                       registro={register('horas_trab', { required: 'Horário é obrigatório' })} erro={errors.horas_trab} />
                   </FormGroup>
                   <FormGroup label="Status administrativo" htmlFor="status" required>
-                    <CampoEntrada id="status" placeholder="NORMAL" className={fieldClass}
-                      registro={register('status', { required: 'Status é obrigatório' })} erro={errors.status} />
+                    <CampoSelecao
+                      id="status"
+                      className={fieldClass}
+                      placeholder="Selecione o status"
+                      options={[
+                        { value: 'Ativo', label: 'Ativo' },
+                        { value: 'Normal', label: 'Normal' },
+                        { value: 'INSS', label: 'INSS' },
+                        { value: 'Férias', label: 'Férias' },
+                        { value: 'Aposentado', label: 'Aposentado' },
+                        { value: 'Exonerado', label: 'Exonerado' },
+                        { value: 'Cedido Outra Secretaria', label: 'Cedido Outra Secretaria' },
+                        { value: 'Cedemos', label: 'Cedemos' },
+                      ]}
+                      registro={register('status', {
+                        required: 'Status é obrigatório'
+                      })}
+                      erro={errors.status}
+                    />
                   </FormGroup>
                   <FormGroup label="Início da lotação (opcional)" htmlFor="dataInicioLotacao">
                     <CampoEntrada id="dataInicioLotacao" type="date" className={fieldClass}
@@ -482,9 +601,8 @@ export default function CadastroServidorPage() {
                 <div className="my-5 border-t border-slate-200" />
                 <dl className="space-y-4 text-sm">
                   <div><dt className="text-xs text-slate-500">Matrícula</dt><dd>{matricula || 'Não informada'}</dd></div>
-                  <div><dt className="text-xs text-slate-500">Unidade de destino</dt><dd className="break-words">{lotacao || 'Não informada'}</dd></div>
-                  <div><dt className="text-xs text-slate-500">Centro de custo</dt><dd className="break-words">{centroCusto || 'Não informado'}</dd></div>
-                  <div><dt className="text-xs text-slate-500">Função</dt><dd className="break-words">{funcao || 'Não informada'}</dd></div>
+                  <div><dt className="text-xs text-slate-500">Unidade de destino</dt><dd className="break-words">{catalogos.lotacoes.find((item) => item._id === lotacao)?.desc || 'Não informada'}</dd></div>
+                  <div><dt className="text-xs text-slate-500">Função</dt><dd className="break-words">{catalogos.funcoes.find((item) => item._id === funcao)?.desc || 'Não informada'}</dd></div>
                   <div><dt className="text-xs text-slate-500">Carga horária</dt><dd>{cHoraria ? `${cHoraria}h semanais` : 'Não informada'}</dd></div>
                   <div><dt className="text-xs text-slate-500">Horário</dt><dd className="break-words">{horasTrabalhadas || 'Não informado'}</dd></div>
                 </dl>
@@ -503,7 +621,7 @@ export default function CadastroServidorPage() {
             <p className="text-xs text-slate-500">Confira os dados antes de concluir o cadastro.</p>
             <div className="flex flex-wrap gap-2">
               <Button type="button" variant="neutral" icon={RotateCcw}
-                onClick={() => { reset(initialValues); setSubmitted(false); }}>
+                onClick={() => { reset(initialValues); setSubmitted(false); setErroCadastro('');}}>
                 Limpar
               </Button>
               <Button type="submit" variant="enviar" icon={Check} disabled={isSubmitting}>
@@ -511,19 +629,34 @@ export default function CadastroServidorPage() {
               </Button>
             </div>
           </div>
+
+
           {submitted && (
             <div className="mt-3">
               <Indicator
                 size="banner"
-                variant="warning"
-                message="Formulário validado (sem envio à API)"
-                description="O payload, incluindo c_custo, está no console. Para cadastrar, conecte a rota POST da API."
+                variant="success"
+                message="Servidor cadastrado com sucesso!"
+                description="Os dados foram enviados e salvos pela API."
               />
             </div>
           )}
+
+          {erroCadastro && (
+            <div className="mt-3" role="alert">
+              <Indicator
+                size="banner"
+                variant="error"
+                message="Erro ao cadastrar servidor"
+                description={erroCadastro}
+              />
+            </div>
+          )}
+
+
         </form>
 
-        <footer className="mt-6 text-xs text-slate-400">Protótipo de cadastro • sem conexão com a API</footer>
+        <footer className="mt-6 text-xs text-slate-400">Cadastro de servidores • RH Saúde</footer>
       </div>
     </main>
   );

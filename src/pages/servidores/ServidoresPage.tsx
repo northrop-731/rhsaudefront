@@ -20,7 +20,6 @@ interface Servidor {
   cpf: string;
   unidade: string;
   funcao: string;
-  centroCusto: string;
   status: StatusServidor;
   atualizadoEm: string;
 }
@@ -34,16 +33,16 @@ interface Filtros {
 
 // Dados fictícios. Substitua por uma consulta à API quando o backend estiver disponível.
 const servidoresMock: Servidor[] = [
-  { id: 1, nome: 'Ana Paula Souza', matricula: '004182', cpf: '123.456.789-00', unidade: 'UBS Jardim Imperial', funcao: 'Enfermeira', centroCusto: '10.02.01', status: 'Ativo', atualizadoEm: '26/10/2026, 09:42' },
-  { id: 2, nome: 'Bruno Lima', matricula: '003785', cpf: '234.567.890-11', unidade: 'UBS Centro', funcao: 'Assist. administrativo', centroCusto: '10.01.02', status: 'Ativo', atualizadoEm: '26/10/2026, 09:30' },
-  { id: 3, nome: 'Camila Oliveira', matricula: '004091', cpf: '345.678.901-22', unidade: 'UBS Jardim Imperial', funcao: 'Téc. enfermagem', centroCusto: '10.02.01', status: 'Ativo', atualizadoEm: '26/10/2026, 09:18' },
-  { id: 4, nome: 'Diego Santos', matricula: '002846', cpf: '456.789.012-33', unidade: 'UPA Cerejeiras', funcao: 'Enfermeiro', centroCusto: '10.03.01', status: 'Afastado', atualizadoEm: '26/10/2026, 08:56' },
-  { id: 5, nome: 'Elisa Martins', matricula: '001927', cpf: '567.890.123-44', unidade: 'Sede administrativa', funcao: 'Analista financeiro', centroCusto: '10.01.03', status: 'Aposentado', atualizadoEm: '23/10/2026, 16:20' },
-  { id: 6, nome: 'Felipe Almeida', matricula: '003512', cpf: '678.901.234-55', unidade: 'SAE', funcao: 'Assist. administrativo', centroCusto: '10.04.02', status: 'Cedido', atualizadoEm: '23/10/2026, 15:10' },
-  { id: 7, nome: 'Gabriela Rocha', matricula: '002318', cpf: '789.012.345-66', unidade: 'UBS Centro', funcao: 'Enfermeira', centroCusto: '10.02.02', status: 'Licenciado', atualizadoEm: '23/10/2026, 14:45' },
-  { id: 8, nome: 'Henrique Costa', matricula: '001684', cpf: '890.123.456-77', unidade: 'Sede administrativa', funcao: 'Assist. administrativo', centroCusto: '10.01.01', status: 'Demitido', atualizadoEm: '22/10/2026, 10:12' },
-  { id: 9, nome: 'Isabela Ferreira', matricula: '004293', cpf: '901.234.567-88', unidade: 'UPA Cerejeiras', funcao: 'Médica', centroCusto: '10.03.01', status: 'Ativo', atualizadoEm: '22/10/2026, 09:40' },
-  { id: 10, nome: 'João Ribeiro', matricula: '004301', cpf: '012.345.678-99', unidade: 'SAE', funcao: 'Téc. enfermagem', centroCusto: '10.04.02', status: 'Ativo', atualizadoEm: '21/10/2026, 11:30' },
+  { id: 1, nome: 'Ana Paula Souza', matricula: '004182', cpf: '123.456.789-00', unidade: 'UBS Jardim Imperial', funcao: 'Enfermeira', status: 'Ativo', atualizadoEm: '26/10/2026, 09:42' },
+  { id: 2, nome: 'Bruno Lima', matricula: '003785', cpf: '234.567.890-11', unidade: 'UBS Centro', funcao: 'Assist. administrativo', status: 'Ativo', atualizadoEm: '26/10/2026, 09:30' },
+  { id: 3, nome: 'Camila Oliveira', matricula: '004091', cpf: '345.678.901-22', unidade: 'UBS Jardim Imperial', funcao: 'Téc. enfermagem', status: 'Ativo', atualizadoEm: '26/10/2026, 09:18' },
+  { id: 4, nome: 'Diego Santos', matricula: '002846', cpf: '456.789.012-33', unidade: 'UPA Cerejeiras', funcao: 'Enfermeiro', status: 'Afastado', atualizadoEm: '26/10/2026, 08:56' },
+  { id: 5, nome: 'Elisa Martins', matricula: '001927', cpf: '567.890.123-44', unidade: 'Sede administrativa', funcao: 'Analista financeiro', status: 'Aposentado', atualizadoEm: '23/10/2026, 16:20' },
+  { id: 6, nome: 'Felipe Almeida', matricula: '003512', cpf: '678.901.234-55', unidade: 'SAE', funcao: 'Assist. administrativo', status: 'Cedido', atualizadoEm: '23/10/2026, 15:10' },
+  { id: 7, nome: 'Gabriela Rocha', matricula: '002318', cpf: '789.012.345-66', unidade: 'UBS Centro', funcao: 'Enfermeira', status: 'Licenciado', atualizadoEm: '23/10/2026, 14:45' },
+  { id: 8, nome: 'Henrique Costa', matricula: '001684', cpf: '890.123.456-77', unidade: 'Sede administrativa', funcao: 'Assist. administrativo', status: 'Demitido', atualizadoEm: '22/10/2026, 10:12' },
+  { id: 9, nome: 'Isabela Ferreira', matricula: '004293', cpf: '901.234.567-88', unidade: 'UPA Cerejeiras', funcao: 'Médica', status: 'Ativo', atualizadoEm: '22/10/2026, 09:40' },
+  { id: 10, nome: 'João Ribeiro', matricula: '004301', cpf: '012.345.678-99', unidade: 'SAE', funcao: 'Téc. enfermagem', status: 'Ativo', atualizadoEm: '21/10/2026, 11:30' },
 ];
 
 const valoresIniciais: Filtros = { busca: '', unidade: '', funcao: '', status: '' };
@@ -60,8 +59,8 @@ const variantesStatus: Record<StatusServidor, 'success' | 'warning' | 'neutral' 
 };
 
 function exportarCSV(servidores: Servidor[]) {
-  const cabecalhos = ['Nome', 'Matrícula', 'CPF', 'Unidade / Lotação', 'Função', 'Centro de custo', 'Status', 'Atualização'];
-  const linhas = servidores.map((s) => [s.nome, s.matricula, s.cpf, s.unidade, s.funcao, s.centroCusto, s.status, s.atualizadoEm]);
+  const cabecalhos = ['Nome', 'Matrícula', 'CPF', 'Unidade / Lotação', 'Função', 'Status', 'Atualização'];
+  const linhas = servidores.map((s) => [s.nome, s.matricula, s.cpf, s.unidade, s.funcao, s.status, s.atualizadoEm]);
   const escapar = (valor: string) => `"${valor.replace(/"/g, '""')}"`;
   const csv = '\uFEFF' + [cabecalhos, ...linhas].map((linha) => linha.map(escapar).join(';')).join('\r\n');
   const url = URL.createObjectURL(new Blob([csv], { type: 'text/csv;charset=utf-8;' }));
@@ -211,7 +210,6 @@ export function ServidoresPage() {
                   <th scope="col" className="rounded-l-lg px-3 py-3 font-semibold">Servidor / Matrícula</th>
                   <th scope="col" className="px-3 py-3 font-semibold">Unidade / Lotação</th>
                   <th scope="col" className="px-3 py-3 font-semibold">Função</th>
-                  <th scope="col" className="px-3 py-3 font-semibold">Centro de custo</th>
                   <th scope="col" className="px-3 py-3 font-semibold">Status</th>
                   <th scope="col" className="px-3 py-3 font-semibold">Atualização</th>
                   <th scope="col" className="rounded-r-lg px-3 py-3 font-semibold"><span className="sr-only">Detalhes</span></th>
@@ -224,7 +222,7 @@ export function ServidoresPage() {
                     alternar={() => setServidorAberto((atual) => atual === servidor.id ? null : servidor.id)} />
                 ))}
                 {itensPagina.length === 0 && (
-                  <tr><td colSpan={7} className="px-4 py-12 text-center text-slate-500">
+                  <tr><td colSpan={6} className="px-4 py-12 text-center text-slate-500">
                     <Users size={30} className="mx-auto mb-2 text-slate-300" />
                     Nenhum servidor encontrado para os filtros selecionados.
                   </td></tr>
@@ -252,7 +250,6 @@ export function ServidoresPage() {
         </Card>
 
         <footer className="mt-6 flex flex-wrap items-center justify-between gap-2 text-xs text-slate-400">
-          <p>O centro de custo acompanha o vínculo entre unidade, lotação e função.</p>
           <p>Ambiente demonstrativo • dados fictícios • sem conexão com a API</p>
         </footer>
       </div>
@@ -275,7 +272,6 @@ function FragmentoServidor({ servidor, aberto, alternar }: {
         </td>
         <td className="px-3 py-3 text-slate-600">{servidor.unidade}</td>
         <td className="px-3 py-3 text-slate-600">{servidor.funcao}</td>
-        <td className="px-3 py-3 text-slate-600">{servidor.centroCusto}</td>
         <td className="px-3 py-3"><Indicator message={servidor.status} variant={variantesStatus[servidor.status]} /></td>
         <td className="px-3 py-3 text-xs text-slate-500">{servidor.atualizadoEm}</td>
         <td className="px-3 py-3 text-right">
@@ -287,11 +283,10 @@ function FragmentoServidor({ servidor, aberto, alternar }: {
       </tr>
       {aberto && (
         <tr className="bg-slate-50/70">
-          <td colSpan={7} className="px-5 py-4">
+          <td colSpan={6} className="px-5 py-4">
             <div className="grid gap-3 text-sm sm:grid-cols-3">
               <div><span className="block text-xs text-slate-500">Nome completo</span><strong className="font-medium">{servidor.nome}</strong></div>
               <div><span className="block text-xs text-slate-500">CPF fictício</span><strong className="font-medium">{servidor.cpf}</strong></div>
-              <div><span className="block text-xs text-slate-500">Centro de custo</span><strong className="font-medium">{servidor.centroCusto}</strong></div>
             </div>
           </td>
         </tr>
