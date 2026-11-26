@@ -1,7 +1,9 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { useNavigate } from 'react-router-dom';
-import { ChevronDown, ChevronRight, Download, Filter, Plus, RotateCcw, Search, Users } from 'lucide-react';
+import { ChevronDown, ChevronRight, Download, Filter, Plus, RotateCcw, Search, Users, Pencil, Trash2 } from 'lucide-react';
+
+import axios from 'axios';
 
 import { api } from '../../services/api';
 
@@ -142,6 +144,15 @@ export function ServidoresPage() {
   const [carregando, setCarregando] = useState(true);
   const [erroServidores, setErroServidores] = useState('');
 
+  const [excluindo, setExcluindo] =
+  useState<string | null>(null);
+
+  const [erroExclusao, setErroExclusao] =
+    useState('');
+
+  const [sucessoExclusao, setSucessoExclusao] =
+    useState('');
+
   useEffect(() => {
     async function carregarServidores() {
       try {
@@ -232,6 +243,45 @@ export function ServidoresPage() {
     setServidorAberto(null);
   }
 
+  async function excluirServidor(servidor: Servidor) {
+    if (excluindo) return;
+
+    const confirmar = window.confirm(
+      `Deseja excluir o servidor ${servidor.dadosPessoais.nome}?\n\nEssa ação não poderá ser desfeita.`
+    );
+
+    if (!confirmar) return;
+
+    setExcluindo(servidor._id);
+    setErroExclusao('');
+    setSucessoExclusao('');
+
+    try {
+      await api.delete(`/servidores/${servidor._id}`);
+
+      setServidores((atuais) =>
+        atuais.filter((item) => item._id !== servidor._id)
+      );
+
+      setServidorAberto(null);
+      setPagina(1);
+      setSucessoExclusao('Servidor excluído com sucesso!');
+    } catch (error) {
+      console.error('Erro ao excluir servidor:', error);
+
+      if (axios.isAxiosError<{ message?: string }>(error)) {
+        setErroExclusao(
+          error.response?.data?.message ||
+          'Não foi possível excluir o servidor.'
+        );
+      } else {
+        setErroExclusao('Erro inesperado ao excluir servidor.');
+      }
+    } finally {
+      setExcluindo(null);
+    }
+  }
+
   return (
     <main className="min-h-screen bg-slate-100 px-4 py-6 text-slate-800 md:px-8 lg:px-12">
       <div className="mx-auto max-w-[1440px]">
@@ -296,6 +346,27 @@ export function ServidoresPage() {
           </Card>
         </div>
 
+        {sucessoExclusao && (
+          <div className="mb-4" role="status">
+            <Indicator
+              size="banner"
+              variant="success"
+              message={sucessoExclusao}
+            />
+          </div>
+        )}
+
+        {erroExclusao && (
+          <div className="mb-4" role="alert">
+            <Indicator
+              size="banner"
+              variant="error"
+              message="Erro ao excluir servidor"
+              description={erroExclusao}
+            />
+          </div>
+        )}
+
         <Card>
           <div className="mb-4 flex flex-wrap items-center gap-5 border-b border-slate-200">
             {([
@@ -354,6 +425,11 @@ export function ServidoresPage() {
                           atual === servidor._id ? null : servidor._id
                         )
                       }
+                      editar={() =>
+                        navigate(`/app/servidores/${servidor._id}/editar`)
+                      }
+                      excluir={() => excluirServidor(servidor)}
+                      excluindo={excluindo !== null}
                     />
                   ))
                 )}
@@ -388,11 +464,20 @@ export function ServidoresPage() {
 }
 
 // Mantido nesta página por enquanto. Pode virar um componente compartilhado quando houver outras tabelas.
-function FragmentoServidor({ servidor, aberto, alternar }: {
-  
+function FragmentoServidor({
+  servidor,
+  aberto,
+  alternar,
+  editar,
+  excluir,
+  excluindo,
+}: {
   servidor: Servidor;
   aberto: boolean;
   alternar: () => void;
+  editar: () => void;
+  excluir: () => void;
+  excluindo: boolean;
 }) {
   const status = servidor.status.at(-1)?.situacao;
   return (
@@ -419,6 +504,25 @@ function FragmentoServidor({ servidor, aberto, alternar }: {
             <div className="grid gap-3 text-sm sm:grid-cols-3">
               <div><span className="block text-xs text-slate-500">Nome completo</span><strong className="font-medium">{servidor.dadosPessoais.nome}</strong></div>
               <div><span className="block text-xs text-slate-500">CPF</span><strong className="font-medium">{servidor.dadosPessoais.cpf}</strong></div>
+              <div className="mt-4 flex flex-wrap justify-end gap-2">
+                <Button
+                  variant="verificar"
+                  icon={Pencil}
+                  onClick={editar}
+                  disabled={excluindo}
+                >
+                  Editar
+                </Button>
+
+                <Button
+                  variant="excluir"
+                  icon={Trash2}
+                  onClick={excluir}
+                  disabled={excluindo}
+                >
+                  Excluir
+                </Button>
+              </div>
             </div>
           </td>
         </tr>

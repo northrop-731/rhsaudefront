@@ -27,6 +27,15 @@ export function PrivateRoutes() {
       />
 
       <Route
+        path="/servidores/:id/editar"
+        element={
+          <ProtectedRoute allowedRoles={['admin', 'user']}>
+            <CadastroServidorPage />
+          </ProtectedRoute>
+        }
+      />
+
+      <Route
         path="*"
         element={<Navigate to="/app/servidores" replace />}
       />
