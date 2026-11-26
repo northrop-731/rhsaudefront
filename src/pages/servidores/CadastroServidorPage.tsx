@@ -24,6 +24,10 @@ interface OpcaoCatalogo {
   desc: string;
 }
 
+interface LotacaoCatalogo extends OpcaoCatalogo {
+  diretoriaId?: OpcaoCatalogo | null;
+}
+
 interface ServidorFormData {
   nome: string;
   cpf: string;
@@ -125,30 +129,34 @@ export default function CadastroServidorPage() {
   const [catalogos, setCatalogos] = useState({
     funcoes: [] as OpcaoCatalogo[],
     especialidades: [] as OpcaoCatalogo[],
-    diretorias: [] as OpcaoCatalogo[],
-    lotacoes: [] as OpcaoCatalogo[],
+    lotacoes: [] as LotacaoCatalogo[],
   });
+
+  const [carregandoCatalogos, setCarregandoCatalogos] = useState(true);
 
   useEffect(() => {
     async function carregarCatalogos() {
       try {
-        const [funcoes, especialidades, diretorias, lotacoes] =
+        const [funcoes, especialidades, lotacoes] =
           await Promise.all([
             api.get<OpcaoCatalogo[]>('/funcao'),
             api.get<OpcaoCatalogo[]>('/especialidade'),
-            api.get<OpcaoCatalogo[]>('/diretoria'),
-            api.get<OpcaoCatalogo[]>('/lotacao'),
+            api.get<LotacaoCatalogo[]>('/lotacao'),
           ]);
 
         setCatalogos({
           funcoes: funcoes.data,
           especialidades: especialidades.data,
-          diretorias: diretorias.data,
           lotacoes: lotacoes.data,
         });
       } catch (error) {
         console.error('Erro ao carregar catálogos:', error);
-        setErroCatalogos('Não foi possível carregar as opções do cadastro.');
+
+        setErroCatalogos(
+          'Não foi possível carregar as opções do cadastro.'
+        );
+      } finally {
+        setCarregandoCatalogos(false);
       }
     }
 
@@ -178,6 +186,16 @@ export default function CadastroServidorPage() {
   const [nome, matricula, funcao, lotacao, active, cHoraria, horasTrabalhadas] =
     watch(['nome', 'matricula', 'funcao', 'lotacao', 'active', 'c_horaria', 'horas_trab']);
 
+  const lotacaoSelecionada = catalogos.lotacoes.find(
+    (item) => item._id === lotacao
+  );
+
+  const diretoriaSelecionada = lotacaoSelecionada?.diretoriaId;
+
+  useEffect(() => {
+    setValue('diretoria', diretoriaSelecionada?._id || '');
+  }, [diretoriaSelecionada, setValue]);
+
   // Intercepta o evento onChange dos campos com máscara, formata o valor no elemento HTML
   // e sincroniza o resultado no estado do react-hook-form disparando a validação em seguida.
   const formattedChange = (
@@ -196,11 +214,27 @@ export default function CadastroServidorPage() {
     setSubmitted(false);
     setErroCadastro('');
 
+    const diretoriaId = catalogos.lotacoes.find(
+      (item) => item._id === data.lotacao
+    )?.diretoriaId?._id;
+
+    if (!diretoriaId) {
+      setErroCadastro(
+        'A lotação selecionada não possui uma diretoria vinculada.'
+      );
+      return;
+    }
+
     try {
-      const { dataInicioLotacao, dataTerminoLotacao, ...root } = data;
+      const {
+        dataInicioLotacao,
+        dataTerminoLotacao,
+        ...root
+      } = data;
 
       await api.post('/servidores', {
         ...root,
+        diretoria: diretoriaId,
         c_horaria: Number(data.c_horaria),
         n_end: Number(data.n_end),
         cep: onlyDigits(data.cep, 8),
@@ -338,6 +372,7 @@ export default function CadastroServidorPage() {
                       id="funcao"
                       className={fieldClass}
                       placeholder="Selecione a função"
+                      disabled={carregandoCatalogos}
                       options={catalogos.funcoes.map((item) => ({
                         value: item._id,
                         label: item.desc,
@@ -354,6 +389,7 @@ export default function CadastroServidorPage() {
                       id="especialidade"
                       className={fieldClass}
                       placeholder="Selecione a especialidade"
+                      disabled={carregandoCatalogos}
                       options={catalogos.especialidades.map((item) => ({
                         value: item._id,
                         label: item.desc,
@@ -365,21 +401,6 @@ export default function CadastroServidorPage() {
                     />
                   </FormGroup>
 
-                  <FormGroup label="Diretoria" htmlFor="diretoria" required>
-                    <CampoSelecao
-                      id="diretoria"
-                      className={fieldClass}
-                      placeholder="Selecione a diretoria"
-                      options={catalogos.diretorias.map((item) => ({
-                        value: item._id,
-                        label: item.desc,
-                      }))}
-                      registro={register('diretoria', {
-                        required: 'Diretoria é obrigatória',
-                      })}
-                      erro={errors.diretoria}
-                    />
-                  </FormGroup>
                   <FormGroup label="Área" htmlFor="area" required>
                     <CampoEntrada
                       id="area"
@@ -416,17 +437,42 @@ export default function CadastroServidorPage() {
                       id="lotacao"
                       className={fieldClass}
                       placeholder="Selecione a lotação"
+                      disabled={carregandoCatalogos}
                       options={catalogos.lotacoes.map((item) => ({
                         value: item._id,
                         label: item.desc,
                       }))}
                       registro={register('lotacao', {
                         required: 'Lotação é obrigatória',
+                        validate: (value) =>
+                          !!catalogos.lotacoes.find(
+                            (item) => item._id === value
+                          )?.diretoriaId?._id ||
+                          'A lotação selecionada não possui uma diretoria vinculada.',
                       })}
                       erro={errors.lotacao}
                     />
                   </FormGroup>
 
+                  <FormGroup
+                    label="Diretoria"
+                    htmlFor="diretoria"
+                    className="sm:col-span-2"
+                  >
+                    <input
+                      type="hidden"
+                      {...register('diretoria')}
+                    />
+
+                    <input
+                      id="diretoria"
+                      type="text"
+                      readOnly
+                      value={diretoriaSelecionada?.desc || ''}
+                      placeholder="Preenchida conforme a lotação"
+                      className="w-full min-h-10 mb-4 rounded border border-gray-300 bg-slate-100 p-2 text-sm text-slate-500"
+                    />
+                  </FormGroup>
                   
                   <FormGroup label="Carga horária semanal" htmlFor="c_horaria" required>
                     <CampoEntrada id="c_horaria" type="number" min={0} step={10} placeholder="0" className={fieldClass}
@@ -609,6 +655,7 @@ export default function CadastroServidorPage() {
                   <div><dt className="text-xs text-slate-500">Função</dt><dd className="break-words">{catalogos.funcoes.find((item) => item._id === funcao)?.desc || 'Não informada'}</dd></div>
                   <div><dt className="text-xs text-slate-500">Carga horária</dt><dd>{cHoraria ? `${cHoraria}h semanais` : 'Não informada'}</dd></div>
                   <div><dt className="text-xs text-slate-500">Horário</dt><dd className="break-words">{horasTrabalhadas || 'Não informado'}</dd></div>
+                  <div><dt className="text-xs text-slate-500">Diretoria</dt><dd className="break-words">{diretoriaSelecionada?.desc || 'Não informada'}</dd></div>
                 </dl>
               </Card>
               <Indicator
@@ -628,7 +675,12 @@ export default function CadastroServidorPage() {
                 onClick={() => { reset(initialValues); setSubmitted(false); setErroCadastro('');}}>
                 Limpar
               </Button>
-              <Button type="submit" variant="enviar" icon={Check} disabled={isSubmitting}>
+              <Button
+                type="submit"
+                variant="enviar"
+                icon={Check}
+                disabled={isSubmitting || carregandoCatalogos || !!erroCatalogos}
+              >
                 Cadastrar servidor
               </Button>
             </div>
