@@ -547,9 +547,17 @@ export default function CadastroServidorPage() {
                         ]}
                         registro={register('genero', { required: 'Gênero é obrigatório' })} erro={errors.genero} />
                     </FormGroup>
-                    <FormGroup label="CNH (opcional)" htmlFor="cnh" className="sm:col-span-1 lg:col-span-2">
+                    <FormGroup label="CNH (opcional)" htmlFor="cnh">
                       <CampoEntrada id="cnh" placeholder="Número da CNH" className={fieldClass}
                         registro={register('cnh')} erro={errors.cnh} />
+                    </FormGroup>
+                    <FormGroup label="PIS" htmlFor="pis" required>
+                      <CampoEntrada id="pis" inputMode="numeric" maxLength={14} placeholder="000.00000.00-0" className={fieldClass}
+                        registro={register('pis', {
+                          required: 'PIS é obrigatório',
+                          pattern: { value: /^\d{3}\.\d{5}\.\d{2}-\d$/, message: 'Use 000.00000.00-0' },
+                          onChange: formattedChange('pis', maskPIS),
+                        })} erro={errors.pis} />
                     </FormGroup>
                   </div>
                 </FormSection>
@@ -564,14 +572,7 @@ export default function CadastroServidorPage() {
                           pattern: { value: /^\d+$/, message: 'Use apenas números' },
                         })} erro={errors.matricula} />
                     </FormGroup>
-                    <FormGroup label="PIS" htmlFor="pis" required>
-                      <CampoEntrada id="pis" inputMode="numeric" maxLength={14} placeholder="000.00000.00-0" className={fieldClass}
-                        registro={register('pis', {
-                          required: 'PIS é obrigatório',
-                          pattern: { value: /^\d{3}\.\d{5}\.\d{2}-\d$/, message: 'Use 000.00000.00-0' },
-                          onChange: formattedChange('pis', maskPIS),
-                        })} erro={errors.pis} />
-                    </FormGroup>
+
                     <FormGroup label="Data de admissão" htmlFor="dt_admissao" required>
                       <CampoEntrada id="dt_admissao" type="date" className={fieldClass}
                         registro={register('dt_admissao', { required: 'Data de admissão é obrigatória' })} erro={errors.dt_admissao} />
@@ -685,11 +686,23 @@ export default function CadastroServidorPage() {
                     </FormGroup>
                     
                     <FormGroup label="Carga horária semanal" htmlFor="c_horaria" required>
-                      <CampoEntrada id="c_horaria" type="number" min={0} step={10} placeholder="0" className={fieldClass}
+                      <CampoSelecao
+                        id="c_horaria"
+                        className={fieldClass}
+                        placeholder="Selecione a carga horária"
+                        options={[
+                          { value: '20', label: '20 horas' },
+                          { value: '30', label: '30 horas' },
+                          { value: '40', label: '40 horas' },
+                        ]}
                         registro={register('c_horaria', {
                           required: 'Carga horária é obrigatória',
-                          validate: (value) => Number(value) > 0 || 'Informe um número maior que zero',
-                        })} erro={errors.c_horaria} />
+                          validate: (value) =>
+                            ['20', '30', '40'].includes(value) ||
+                            'Selecione uma carga horária válida',
+                        })}
+                        erro={errors.c_horaria}
+                      />
                     </FormGroup>
                     <FormGroup label="Horas trabalhadas / horário" htmlFor="horas_trab" required>
                       <CampoEntrada id="horas_trab" placeholder="Ex.: 07:00 às 16:00" className={fieldClass}
@@ -701,7 +714,6 @@ export default function CadastroServidorPage() {
                         className={fieldClass}
                         placeholder="Selecione o status"
                         options={[
-                          { value: 'Ativo', label: 'Ativo' },
                           { value: 'Normal', label: 'Normal' },
                           { value: 'INSS', label: 'INSS' },
                           { value: 'Férias', label: 'Férias' },
@@ -716,17 +728,31 @@ export default function CadastroServidorPage() {
                         erro={errors.status}
                       />
                     </FormGroup>
-                    <FormGroup label="Início da lotação (opcional)" htmlFor="dataInicioLotacao">
-                      <CampoEntrada id="dataInicioLotacao" type="date" className={fieldClass}
-                        registro={register('dataInicioLotacao')} erro={errors.dataInicioLotacao} />
+                    <FormGroup label="Início na lotação" htmlFor="dataInicioLotacao" required>
+                      <CampoEntrada
+                        id="dataInicioLotacao"
+                        type="date"
+                        className={fieldClass}
+                        registro={register('dataInicioLotacao', {
+                          required: 'Início na lotação é obrigatório',
+                        })}
+                        erro={errors.dataInicioLotacao}
+                      />
                     </FormGroup>
-                    {/* Validação cruzada: exige dataInicioLotacao caso o usuário preencha dataTerminoLotacao */}
-                    <FormGroup label="Término da lotação (opcional)" htmlFor="dataTerminoLotacao">
-                      <CampoEntrada id="dataTerminoLotacao" type="date" className={fieldClass}
+
+                    <FormGroup label="Término na lotação (opcional)" htmlFor="dataTerminoLotacao">
+                      <CampoEntrada
+                        id="dataTerminoLotacao"
+                        type="date"
+                        className={fieldClass}
                         registro={register('dataTerminoLotacao', {
                           validate: (value, form) =>
-                            !value || !!form.dataInicioLotacao || 'Informe também o início da lotação',
-                        })} erro={errors.dataTerminoLotacao} />
+                            !value ||
+                            value >= form.dataInicioLotacao ||
+                            'O término não pode ser anterior ao início na lotação',
+                        })}
+                        erro={errors.dataTerminoLotacao}
+                      />
                     </FormGroup>
                     {/* Checkboxes booleanos controlados diretamente pelo register */}
                     <div className="flex flex-wrap items-center gap-6 pb-4 sm:col-span-2 lg:col-span-3">
