@@ -46,7 +46,8 @@ interface ServidorFormData {
   n_conselho: string;
   lotacao: string;
   c_horaria: string;
-  horas_trab: string;
+  horarioInicio: string;
+  horarioFim: string;
   status: string;
   active: boolean;
   e_ponto: boolean;
@@ -125,7 +126,7 @@ const initialValues: ServidorFormData = {
   nome: '', cpf: '', rg: '', nascimento: '', genero: '', cnh: '',
   matricula: '', pis: '', dt_admissao: '', funcao: '',
   especialidade: '', area: '', diretoria: '', conselho: '',
-  n_conselho: '', lotacao: '', c_horaria: '', horas_trab: '',
+  n_conselho: '', lotacao: '', c_horaria: '', horarioInicio: '', horarioFim: '',
   status: 'Normal', active: true, e_ponto: true,
   dataInicioLotacao: '', dataTerminoLotacao: '',
   tel_1: '', tel_2: '', p_email: '', co_email: '',
@@ -202,7 +203,8 @@ function converterServidorParaFormulario(
 
     lotacao: lotacao?.lotacaoId?._id || '',
     c_horaria: String(lotacao?.cargaHorariaSemanal ?? ''),
-    horas_trab: lotacao?.periodo || '',
+    horarioInicio: lotacao?.periodo?.split(' às ')[0] || '',
+    horarioFim: lotacao?.periodo?.split(' às ')[1] || '',
     dataInicioLotacao: lotacao?.dataInicio?.slice(0, 10) || '',
     dataTerminoLotacao: lotacao?.dataTermino?.slice(0, 10) || '',
 
@@ -302,8 +304,30 @@ export default function CadastroServidorPage() {
 
   // Observa em tempo real os campos principais para atualizar o Card lateral de "Resumo do cadastro"
   // conforme o usuário digita no formulário.
-  const [nome, matricula, funcao, lotacao, active, cHoraria, horasTrabalhadas] =
-    watch(['nome', 'matricula', 'funcao', 'lotacao', 'active', 'c_horaria', 'horas_trab']);
+  const [
+    nome,
+    matricula,
+    funcao,
+    lotacao,
+    active,
+    cHoraria,
+    horarioInicio,
+    horarioFim,
+  ] = watch([
+    'nome',
+    'matricula',
+    'funcao',
+    'lotacao',
+    'active',
+    'c_horaria',
+    'horarioInicio',
+    'horarioFim',
+  ]);
+
+  const horasTrabalhadas =
+    horarioInicio && horarioFim
+      ? `${horarioInicio} às ${horarioFim}`
+      : '';
 
   useEffect(() => {
     if (!id) {
@@ -398,6 +422,8 @@ export default function CadastroServidorPage() {
       const {
         dataInicioLotacao,
         dataTerminoLotacao,
+        horarioInicio,
+        horarioFim,
         ...root
       } = data;
 
@@ -405,6 +431,7 @@ export default function CadastroServidorPage() {
         ...root,
         diretoria: diretoriaId,
         c_horaria: Number(data.c_horaria),
+        horas_trab: `${horarioInicio} às ${horarioFim}`,
         n_end: Number(data.n_end),
         cep: onlyDigits(data.cep, 8),
         dt_inicio: dataInicioLotacao,
@@ -704,9 +731,43 @@ export default function CadastroServidorPage() {
                         erro={errors.c_horaria}
                       />
                     </FormGroup>
-                    <FormGroup label="Horas trabalhadas / horário" htmlFor="horas_trab" required>
-                      <CampoEntrada id="horas_trab" placeholder="Ex.: 07:00 às 16:00" className={fieldClass}
-                        registro={register('horas_trab', { required: 'Horário é obrigatório' })} erro={errors.horas_trab} />
+                    <FormGroup
+                      label="Horas trabalhadas / horário"
+                      htmlFor="horarioInicio"
+                      required
+                      className="sm:col-span-2"
+                    >
+                      <div className="flex items-start gap-3">
+                        <div className="min-w-0 flex-1">
+                          <CampoEntrada
+                            id="horarioInicio"
+                            type="time"
+                            aria-label="Horário de início"
+                            className={fieldClass}
+                            registro={register('horarioInicio', {
+                              required: 'Informe o horário de início',
+                            })}
+                            erro={errors.horarioInicio}
+                          />
+                        </div>
+
+                        <span className="pt-3 text-sm text-slate-500">
+                          às
+                        </span>
+
+                        <div className="min-w-0 flex-1">
+                          <CampoEntrada
+                            id="horarioFim"
+                            type="time"
+                            aria-label="Horário de término"
+                            className={fieldClass}
+                            registro={register('horarioFim', {
+                              required: 'Informe o horário de término',
+                            })}
+                            erro={errors.horarioFim}
+                          />
+                        </div>
+                      </div>
                     </FormGroup>
                     <FormGroup label="Status administrativo" htmlFor="status" required>
                       <CampoSelecao
