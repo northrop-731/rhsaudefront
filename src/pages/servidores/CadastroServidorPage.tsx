@@ -197,11 +197,15 @@ export default function CadastroServidorPage() {
     setErroCadastro('');
 
     try {
+      const { dataInicioLotacao, dataTerminoLotacao, ...root } = data;
+
       await api.post('/servidores', {
-        ...data,
+        ...root,
         c_horaria: Number(data.c_horaria),
         n_end: Number(data.n_end),
         cep: onlyDigits(data.cep, 8),
+        dt_inicio: dataInicioLotacao,
+        dt_termino: dataTerminoLotacao || null,
       });
 
       setSubmitted(true);
