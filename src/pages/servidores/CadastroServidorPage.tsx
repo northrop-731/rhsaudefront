@@ -735,7 +735,6 @@ export default function CadastroServidorPage() {
                       label="Horas trabalhadas / horário"
                       htmlFor="horarioInicio"
                       required
-                      className="sm:col-span-2"
                     >
                       <div className="flex items-start gap-3">
                         <div className="min-w-0 flex-1">
@@ -966,35 +965,39 @@ export default function CadastroServidorPage() {
 
             {/* Barra inferior de ações: botão Limpar restaura os initialValues e botão Cadastrar dispara o onSubmit */}
             <div className="mt-5 flex flex-wrap items-center justify-between gap-3 rounded-xl border border-slate-200 bg-white px-5 py-4 shadow-sm">
-              <p className="text-xs text-slate-500">Confira os dados antes de concluir o cadastro.</p>
-              <div className="flex flex-wrap gap-2">
-                <Button
-                  type="button"
-                  variant="neutral"
-                  icon={RotateCcw}
-                  onClick={() => {
-                    reset(valoresOriginais);
-                    setSubmitted(false);
-                    setErroCadastro('');
-                  }}
-                >
-                  {modoEdicao ? 'Restaurar dados' : 'Limpar'}
-                </Button>
-                <Button
-                  type="submit"
-                  variant="enviar"
-                  icon={Check}
-                  disabled={
-                    isSubmitting ||
-                    carregandoCatalogos ||
-                    carregandoServidor ||
-                    !!erroCatalogos ||
-                    !!erroCarregamento
-                  }
-                >
-                  {modoEdicao ? 'Salvar alterações' : 'Cadastrar servidor'}
-                </Button>
-              </div>
+
+              <Button
+                type="button"
+                variant="warning"
+                icon={RotateCcw}
+                onClick={() => {
+                  reset(valoresOriginais);
+                  setSubmitted(false);
+                  setErroCadastro('');
+                }}
+              >
+                {modoEdicao ? 'Restaurar dados' : 'Limpar'}
+              </Button>
+
+              <p className="text-xs text-slate-500">
+                Confira os dados antes de concluir o cadastro.
+              </p>
+
+              <Button
+                type="submit"
+                variant="enviar"
+                icon={Check}
+                disabled={
+                  isSubmitting ||
+                  carregandoCatalogos ||
+                  carregandoServidor ||
+                  !!erroCatalogos ||
+                  !!erroCarregamento
+                }
+              >
+                {modoEdicao ? 'Salvar alterações' : 'Cadastrar servidor'}
+              </Button>
+
             </div>
 
 

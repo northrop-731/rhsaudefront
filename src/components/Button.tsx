@@ -15,7 +15,8 @@ interface ButtonProps
     | 'verificar'
     | 'excluir'
     | 'secondary'
-    | 'neutral';
+    | 'neutral'
+    | 'warning';
   icon?: LucideIcon;
   iconPosition?: 'left' | 'right';
 }
@@ -27,6 +28,7 @@ const colors = {
   excluir: 'bg-red-600 text-white hover:bg-red-700',
   secondary: 'bg-indigo-600 text-white hover:bg-indigo-700',
   neutral: 'bg-gray-200 text-gray-800 hover:bg-gray-300',
+  warning: 'bg-yellow-400 text-yellow-950 hover:bg-yellow-500',
 };
 
 // Componente de botão padrão da aplicação.
