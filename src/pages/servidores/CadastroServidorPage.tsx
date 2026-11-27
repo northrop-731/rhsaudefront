@@ -14,6 +14,7 @@ import { FormGroup } from '../../components/FormGroup';
 import { FormSection } from '../../components/FormSection';
 import { Indicator } from '../../components/Indicator';
 import { CampoSelecao } from '../../components/Select';
+import { ConfirmacaoEdicao } from '../../components/ConfirmacaoEdicao';
 
 // Tipagem plana de todos os campos controlados pelo formulário.
 // No momento do submit (onSubmit), esses dados planos são transformados e agrupados
@@ -279,6 +280,12 @@ export default function CadastroServidorPage() {
   const { id } = useParams<{ id: string }>();
   const modoEdicao = Boolean(id);
 
+  const [dadosPendentes, setDadosPendentes] =
+    useState<ServidorFormData | null>(null);
+
+  const [salvandoEdicao, setSalvandoEdicao] =
+    useState(false);
+
   const [carregandoServidor, setCarregandoServidor] =
     useState(modoEdicao);
 
@@ -459,6 +466,28 @@ export default function CadastroServidorPage() {
     }
   };
 
+  const solicitarEnvio = async (data: ServidorFormData) => {
+    if (modoEdicao) {
+      setErroCadastro('');
+      setDadosPendentes(data);
+      return;
+    }
+
+    await onSubmit(data);
+  };
+
+  const confirmarEdicao = async () => {
+    if (!dadosPendentes || salvandoEdicao) return;
+
+    setSalvandoEdicao(true);
+
+    try {
+      await onSubmit(dadosPendentes);
+    } finally {
+      setSalvandoEdicao(false);
+      setDadosPendentes(null);
+    }
+  };
 
   // Extrai as iniciais dos dois primeiros nomes do servidor para mostrar no avatar do resumo lateral.
   const initials = nome.trim()
@@ -518,14 +547,15 @@ export default function CadastroServidorPage() {
           </div>
         )}
         
-        <form onSubmit={handleSubmit(onSubmit)} noValidate>
+        <form onSubmit={handleSubmit(solicitarEnvio)} noValidate>
           <fieldset
             disabled={
               carregandoServidor ||
               carregandoCatalogos ||
               !!erroCarregamento ||
               !!erroCatalogos ||
-              isSubmitting
+              isSubmitting ||
+              salvandoEdicao
             }
             className="min-w-0"
           >
@@ -1026,6 +1056,15 @@ export default function CadastroServidorPage() {
             )}
           </fieldset>
         </form>
+
+        {dadosPendentes && (
+          <ConfirmacaoEdicao
+            nome={dadosPendentes.nome}
+            onConfirmar={confirmarEdicao}
+            onCancelar={() => setDadosPendentes(null)}
+            salvando={salvandoEdicao}
+          />
+        )}
 
         <footer className="mt-6 text-xs text-slate-400">Cadastro de servidores • RH Saúde</footer>
       </div>
