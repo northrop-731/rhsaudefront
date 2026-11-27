@@ -762,7 +762,7 @@ export default function CadastroServidorPage() {
                       />
                     </FormGroup>
                     <FormGroup
-                      label="Horas trabalhadas / horário"
+                      label="Período"
                       htmlFor="horarioInicio"
                       required
                     >
@@ -995,7 +995,7 @@ export default function CadastroServidorPage() {
                     <div><dt className="text-xs text-slate-500">Unidade de destino</dt><dd className="break-words">{catalogos.lotacoes.find((item) => item._id === lotacao)?.desc || 'Não informada'}</dd></div>
                     <div><dt className="text-xs text-slate-500">Função</dt><dd className="break-words">{catalogos.funcoes.find((item) => item._id === funcao)?.desc || 'Não informada'}</dd></div>
                     <div><dt className="text-xs text-slate-500">Carga horária</dt><dd>{cHoraria ? `${cHoraria}h semanais` : 'Não informada'}</dd></div>
-                    <div><dt className="text-xs text-slate-500">Horário</dt><dd className="break-words">{horasTrabalhadas || 'Não informado'}</dd></div>
+                    <div><dt className="text-xs text-slate-500">Período</dt><dd className="break-words">{horasTrabalhadas || 'Não informado'}</dd></div>
                     <div><dt className="text-xs text-slate-500">Diretoria</dt><dd className="break-words">{diretoriaSelecionada?.desc || 'Não informada'}</dd></div>
                   </dl>
                 </Card>

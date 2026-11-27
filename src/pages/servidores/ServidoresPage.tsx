@@ -624,7 +624,7 @@ function FragmentoServidor({
                   }
                 />
                 <DetalheServidor
-                  label="Horas trabalhadas / horário"
+                  label="Período"
                   valor={lotacao?.periodo}
                 />
                 <DetalheServidor
