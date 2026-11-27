@@ -13,10 +13,11 @@ import { CampoEntrada } from '../../components/Field';
 import { FormGroup } from '../../components/FormGroup';
 import { Indicator } from '../../components/Indicator';
 import { CampoSelecao } from '../../components/Select';
+import { DetalheServidor } from '../../components/DetalheServidor';
+import { SecaoDetalhes } from '../../components/SecaoDetalhes';
 
 
 type StatusServidor =
-  | 'Ativo'
   | 'Normal'
   | 'INSS'
   | 'Férias'
@@ -35,23 +36,59 @@ interface Referencia {
 interface Servidor {
   _id: string;
   matricula: string;
+  dt_admissao: string;
   active: boolean;
+  e_ponto: boolean;
+  area: string;
+  conselho?: string;
+  n_conselho?: string;
+  description?: string;
 
   dadosPessoais: {
     nome: string;
     cpf: string;
+    rg: string;
+    pis: string;
+    cnh?: string;
+    dataNascimento: string;
+    genero: string;
+  };
+
+  contatos: {
+    tel_1: string;
+    tel_2?: string;
+    p_email?: string;
+    corp_email?: string;
+  }[];
+
+  endereco: {
+    logradouro: string;
+    numero: number;
+    complemento?: string;
+    bairro: string;
+    cidade: string;
+    uf: string;
+    cep: string;
   };
 
   lotacoes: {
     lotacaoId?: Referencia | null;
     funcaoId?: Referencia | null;
+    especialidadeId?: Referencia | null;
+    diretoriaId?: Referencia | null;
+    cargaHorariaSemanal: number;
+    periodo: string;
+    dataInicio: string;
     dataTermino?: string | null;
   }[];
 
   status: {
     situacao: StatusServidor;
+    dataRegistro?: string;
+    observacao?: string;
   }[];
 
+  createdAt?: string;
   updatedAt: string;
 }
 
@@ -73,7 +110,6 @@ const variantesStatus: Record<
   StatusServidor,
   'success' | 'warning' | 'neutral' | 'info' | 'error'
 > = {
-  Ativo: 'success',
   Normal: 'success',
   INSS: 'warning',
   Férias: 'info',
@@ -463,6 +499,16 @@ export function ServidoresPage() {
   );
 }
 
+function formatarData(data?: string | null) {
+  if (!data) return 'Não informada';
+
+  const [ano, mes, dia] = data.slice(0, 10).split('-');
+
+  return ano && mes && dia
+    ? `${dia}/${mes}/${ano}`
+    : data;
+}
+
 // Mantido nesta página por enquanto. Pode virar um componente compartilhado quando houver outras tabelas.
 function FragmentoServidor({
   servidor,
@@ -480,6 +526,12 @@ function FragmentoServidor({
   excluindo: boolean;
 }) {
   const status = servidor.status.at(-1)?.situacao;
+  
+  const pessoal = servidor.dadosPessoais;
+  const lotacao = obterLotacaoAtual(servidor);
+  const endereco = servidor.endereco;
+  const statusAdministrativo = servidor.status?.at(-1)?.situacao;
+
   return (
     <>
       <tr className="border-b border-slate-100 hover:bg-slate-50/70">
@@ -501,28 +553,173 @@ function FragmentoServidor({
       {aberto && (
         <tr className="bg-slate-50/70">
           <td colSpan={6} className="px-5 py-4">
-            <div className="grid gap-3 text-sm sm:grid-cols-3">
-              <div><span className="block text-xs text-slate-500">Nome completo</span><strong className="font-medium">{servidor.dadosPessoais.nome}</strong></div>
-              <div><span className="block text-xs text-slate-500">CPF</span><strong className="font-medium">{servidor.dadosPessoais.cpf}</strong></div>
-              <div className="mt-4 flex flex-wrap justify-end gap-2">
-                <Button
-                  variant="verificar"
-                  icon={Pencil}
-                  onClick={editar}
-                  disabled={excluindo}
-                >
-                  Editar
-                </Button>
+            <div className="flex flex-col gap-5">
 
-                <Button
-                  variant="excluir"
-                  icon={Trash2}
-                  onClick={excluir}
-                  disabled={excluindo}
-                >
-                  Excluir
-                </Button>
-              </div>
+              {/* Dados pessoais */}
+              <SecaoDetalhes titulo="Dados pessoais">
+                <DetalheServidor
+                  label="Nome completo"
+                  valor={pessoal.nome}
+                />
+                <DetalheServidor label="CPF" valor={pessoal.cpf} />
+                <DetalheServidor label="RG" valor={pessoal.rg} />
+                <DetalheServidor
+                  label="Data de nascimento"
+                  valor={formatarData(pessoal.dataNascimento)}
+                />
+                <DetalheServidor label="Gênero" valor={pessoal.genero} />
+                <DetalheServidor label="CNH" valor={pessoal.cnh} />
+                <DetalheServidor label="PIS" valor={pessoal.pis} />
+              </SecaoDetalhes>
+
+              {/* Dados funcionais */}
+              <SecaoDetalhes titulo="Dados funcionais">
+                <DetalheServidor
+                  label="Matrícula"
+                  valor={servidor.matricula}
+                />
+                <DetalheServidor
+                  label="Data de admissão"
+                  valor={formatarData(servidor.dt_admissao)}
+                />
+                <DetalheServidor
+                  label="Função"
+                  valor={lotacao?.funcaoId?.desc}
+                />
+                <DetalheServidor
+                  label="Especialidade"
+                  valor={lotacao?.especialidadeId?.desc}
+                />
+                <DetalheServidor label="Área" valor={servidor.area} />
+                <DetalheServidor
+                  label="Conselho profissional"
+                  valor={servidor.conselho}
+                />
+                <DetalheServidor
+                  label="Número do conselho"
+                  valor={servidor.n_conselho}
+                />
+              </SecaoDetalhes>
+
+              {/* Lotação e jornada */}
+              <SecaoDetalhes titulo="Lotação e jornada">
+                <DetalheServidor
+                  label="Lotação / unidade"
+                  valor={lotacao?.lotacaoId?.desc}
+                />
+                <DetalheServidor
+                  label="Diretoria"
+                  valor={lotacao?.diretoriaId?.desc}
+                />
+                <DetalheServidor
+                  label="Carga horária semanal"
+                  valor={
+                    lotacao?.cargaHorariaSemanal != null
+                      ? `${lotacao.cargaHorariaSemanal} horas`
+                      : undefined
+                  }
+                />
+                <DetalheServidor
+                  label="Horas trabalhadas / horário"
+                  valor={lotacao?.periodo}
+                />
+                <DetalheServidor
+                  label="Início na lotação"
+                  valor={formatarData(lotacao?.dataInicio)}
+                />
+                <DetalheServidor
+                  label="Término na lotação"
+                  valor={formatarData(lotacao?.dataTermino)}
+                />
+                <DetalheServidor
+                  label="Status administrativo"
+                  valor={statusAdministrativo}
+                />
+                <DetalheServidor
+                  label="Servidor ativo"
+                  valor={servidor.active ? 'Sim' : 'Não'}
+                />
+                <DetalheServidor
+                  label="Controle de ponto"
+                  valor={servidor.e_ponto ? 'Sim' : 'Não'}
+                />
+              </SecaoDetalhes>
+
+              {/* Contato */}
+              <SecaoDetalhes titulo="Contato">
+                {servidor.contatos?.length ? (
+                  servidor.contatos.map((contato, index) => (
+                    <div key={index} className="contents">
+                      <DetalheServidor
+                        label="Telefone principal"
+                        valor={contato.tel_1}
+                      />
+                      <DetalheServidor
+                        label="Telefone secundário"
+                        valor={contato.tel_2}
+                      />
+                      <DetalheServidor
+                        label="E-mail pessoal"
+                        valor={contato.p_email}
+                      />
+                      <DetalheServidor
+                        label="E-mail corporativo"
+                        valor={contato.corp_email}
+                      />
+                    </div>
+                  ))
+                ) : (
+                  <p className="text-slate-500">
+                    Nenhum contato cadastrado.
+                  </p>
+                )}
+              </SecaoDetalhes>
+
+              {/* Endereço */}
+              <SecaoDetalhes titulo="Endereço">
+                <DetalheServidor label="CEP" valor={endereco?.cep} />
+                <DetalheServidor
+                  label="Logradouro"
+                  valor={endereco?.logradouro}
+                />
+                <DetalheServidor label="Número" valor={endereco?.numero} />
+                <DetalheServidor
+                  label="Complemento"
+                  valor={endereco?.complemento}
+                />
+                <DetalheServidor label="Bairro" valor={endereco?.bairro} />
+                <DetalheServidor label="Cidade" valor={endereco?.cidade} />
+                <DetalheServidor label="UF" valor={endereco?.uf} />
+              </SecaoDetalhes>
+
+              {/* Observações */}
+              <SecaoDetalhes titulo="Observações">
+                <div className="sm:col-span-2 lg:col-span-3">
+                  <p className="break-words whitespace-pre-wrap text-sm text-slate-600">
+                    {servidor.description || 'Nenhuma observação registrada.'}
+                  </p>
+                </div>
+              </SecaoDetalhes>
+
+            </div>
+            <div className="mt-4 flex flex-wrap justify-end gap-2">
+              <Button
+                variant="verificar"
+                icon={Pencil}
+                onClick={editar}
+                disabled={excluindo}
+              >
+                Editar
+              </Button>
+
+              <Button
+                variant="excluir"
+                icon={Trash2}
+                onClick={excluir}
+                disabled={excluindo}
+              >
+                Excluir
+              </Button>
             </div>
           </td>
         </tr>
