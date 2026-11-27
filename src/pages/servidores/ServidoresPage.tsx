@@ -156,7 +156,11 @@ function exportarCSV(servidores: Servidor[]) {
   ]);
 
   const escapar = (valor: string) => `"${valor.replace(/"/g, '""')}"`;
-  const csv = '\uFEFF' + [cabecalhos, ...linhas].map((linha) => linha.map(escapar).join(';')).join('\r\n');
+  const csv =
+    '\uFEFF' +
+    [cabecalhos, ...linhas]
+      .map((linha) => linha.map(escapar).join(','))
+      .join('\r\n');
   const url = URL.createObjectURL(new Blob([csv], { type: 'text/csv;charset=utf-8;' }));
   const link = document.createElement('a');
   link.href = url;
@@ -326,7 +330,7 @@ export function ServidoresPage() {
           </div>
           <div className="flex flex-wrap gap-2">
             <Button variant="neutral" icon={Download} onClick={() => exportarCSV(filtrados)} disabled={filtrados.length === 0}>
-              Exportar
+              Exportar CSV
             </Button>
             <Button variant="enviar" icon={Plus} onClick={() => navigate('/app/servidores/cadastro')}>
               Cadastrar servidor
