@@ -706,26 +706,28 @@ function FragmentoServidor({
               </SecaoDetalhes>
 
             </div>
-            <div className="mt-4 flex flex-wrap justify-end gap-2">
-              <Button
+            <div className="mt-4 flex items-center justify-end gap-3">
+              <button
                 type="button"
-                variant="verificar"
-                icon={Pencil}
+                title="Editar servidor"
+                aria-label="Editar servidor"
                 onClick={editar}
                 disabled={excluindo || confirmandoExclusao}
+                className="cursor-pointer rounded-md p-2 text-sky-600 transition-colors hover:bg-sky-50 hover:text-sky-800 disabled:cursor-not-allowed disabled:opacity-40"
               >
-                Editar
-              </Button>
+                <Pencil size={20} />
+              </button>
 
-              <Button
+              <button
                 type="button"
-                variant="excluir"
-                icon={Trash2}
+                title="Excluir servidor"
+                aria-label="Excluir servidor"
                 onClick={() => setConfirmandoExclusao(true)}
                 disabled={excluindo || confirmandoExclusao}
+                className="cursor-pointer rounded-md p-2 text-red-600 transition-colors hover:bg-red-50 hover:text-red-800 disabled:cursor-not-allowed disabled:opacity-40"
               >
-                Excluir
-              </Button>
+                <Trash2 size={20} />
+              </button>
             </div>
 
             {confirmandoExclusao && (
