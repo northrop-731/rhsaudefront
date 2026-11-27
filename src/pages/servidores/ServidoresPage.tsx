@@ -26,7 +26,7 @@ type StatusServidor =
   | 'Cedido Outra Secretaria'
   | 'Cedemos';
 
-type Aba = 'todos' | 'ativos' | 'outros';
+type Aba = 'todos' | 'ativos' | 'inativos';
 
 interface Referencia {
   _id: string;
@@ -222,7 +222,7 @@ export function ServidoresPage() {
   );
 
   const totalAtivos = servidores.filter((s) => s.active).length;
-  const totalOutros = servidores.length - totalAtivos;
+  const totalInativos = servidores.length - totalAtivos;
 
 
 
@@ -402,7 +402,7 @@ export function ServidoresPage() {
             {([
               ['todos', `Todos os servidores (${servidores.length})`],
               ['ativos', `Ativos (${totalAtivos})`],
-              ['outros', `Outros status (${totalOutros})`],
+              ['inativos', `Inativos (${totalInativos})`],
             ] as const).map(([valor, texto]) => (
               <button key={valor} type="button" onClick={() => trocarAba(valor)}
                 className={`border-b-2 pb-3 text-sm transition-colors ${aba === valor ? 'border-teal-600 font-semibold text-teal-700' : 'border-transparent text-slate-500 hover:text-slate-800'}`}>
