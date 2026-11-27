@@ -957,8 +957,23 @@ export default function CadastroServidorPage() {
                 {/* Seção 6: Observações */}
                 <FormSection title="Observações" subtitle="Informações complementares (opcional)">
                   <FormGroup label="Descrição" htmlFor="description">
-                    <CampoEntrada id="description" placeholder="Observações sobre o cadastro" className={fieldClass}
-                      registro={register('description')} erro={errors.description} />
+                    <CampoEntrada
+                      id="description"
+                      placeholder="Observações sobre o cadastro"
+                      className={fieldClass}
+                      maxLength={800}
+                      registro={register('description', {
+                        maxLength: {
+                          value: 800,
+                          message: 'O limite é de 800 caracteres',
+                        },
+                      })}
+                      erro={errors.description}
+                    />
+
+                    <p className="text-right text-xs text-slate-500">
+                      {watch('description')?.length || 0}/800 caracteres
+                    </p>
                   </FormGroup>
                 </FormSection>
               </div>
