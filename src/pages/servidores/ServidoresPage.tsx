@@ -15,7 +15,7 @@ import { Indicator } from '../../components/Indicator';
 import { CampoSelecao } from '../../components/Select';
 import { DetalheServidor } from '../../components/DetalheServidor';
 import { SecaoDetalhes } from '../../components/SecaoDetalhes';
-
+import { ConfirmacaoExclusao } from '../../components/ConfirmacaoExclusao';
 
 type StatusServidor =
   | 'Normal'
@@ -282,12 +282,6 @@ export function ServidoresPage() {
   async function excluirServidor(servidor: Servidor) {
     if (excluindo) return;
 
-    const confirmar = window.confirm(
-      `Deseja excluir o servidor ${servidor.dadosPessoais.nome}?\n\nEssa ação não poderá ser desfeita.`
-    );
-
-    if (!confirmar) return;
-
     setExcluindo(servidor._id);
     setErroExclusao('');
     setSucessoExclusao('');
@@ -525,6 +519,16 @@ function FragmentoServidor({
   excluir: () => void;
   excluindo: boolean;
 }) {
+
+  const [confirmandoExclusao, setConfirmandoExclusao] =
+    useState(false);
+
+  useEffect(() => {
+    if (!aberto) {
+      setConfirmandoExclusao(false);
+    }
+  }, [aberto]);
+
   const status = servidor.status.at(-1)?.situacao;
   
   const pessoal = servidor.dadosPessoais;
@@ -704,23 +708,34 @@ function FragmentoServidor({
             </div>
             <div className="mt-4 flex flex-wrap justify-end gap-2">
               <Button
+                type="button"
                 variant="verificar"
                 icon={Pencil}
                 onClick={editar}
-                disabled={excluindo}
+                disabled={excluindo || confirmandoExclusao}
               >
                 Editar
               </Button>
 
               <Button
+                type="button"
                 variant="excluir"
                 icon={Trash2}
-                onClick={excluir}
-                disabled={excluindo}
+                onClick={() => setConfirmandoExclusao(true)}
+                disabled={excluindo || confirmandoExclusao}
               >
                 Excluir
               </Button>
             </div>
+
+            {confirmandoExclusao && (
+              <ConfirmacaoExclusao
+                nome={servidor.dadosPessoais.nome}
+                onConfirmar={excluir}
+                onCancelar={() => setConfirmandoExclusao(false)}
+                excluindo={excluindo}
+              />
+            )}
           </td>
         </tr>
       )}
