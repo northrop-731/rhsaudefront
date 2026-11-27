@@ -631,8 +631,19 @@ export default function CadastroServidorPage() {
                     </FormGroup>
 
                     <FormGroup label="Data de admissão" htmlFor="dt_admissao" required>
-                      <CampoEntrada id="dt_admissao" type="date" className={fieldClass}
-                        registro={register('dt_admissao', { required: 'Data de admissão é obrigatória' })} erro={errors.dt_admissao} />
+                      <CampoEntrada
+                        id="dt_admissao"
+                        type="date"
+                        max={`${new Date().getFullYear()}-12-31`}
+                        className={fieldClass}
+                        registro={register('dt_admissao', {
+                          required: 'Data de admissão é obrigatória',
+                          validate: (value) =>
+                            value <= `${new Date().getFullYear()}-12-31` ||
+                            'A data de admissão não pode ultrapassar o ano atual',
+                        })}
+                        erro={errors.dt_admissao}
+                      />
                     </FormGroup>
 
                     <FormGroup label="Função" htmlFor="funcao" required>
