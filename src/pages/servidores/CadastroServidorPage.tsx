@@ -879,11 +879,21 @@ export default function CadastroServidorPage() {
                           onChange: formattedChange('tel_2', maskPhone),
                         })} erro={errors.tel_2} />
                     </FormGroup>
-                    <FormGroup label="E-mail pessoal (opcional)" htmlFor="p_email">
-                      <CampoEntrada id="p_email" type="email" placeholder="nome@exemplo.com" className={fieldClass}
+                    <FormGroup label="E-mail pessoal" htmlFor="p_email" required>
+                      <CampoEntrada
+                        id="p_email"
+                        type="email"
+                        placeholder="nome@exemplo.com"
+                        className={fieldClass}
                         registro={register('p_email', {
-                          validate: (value) => !value || emailPattern.test(value) || 'Digite um e-mail válido',
-                        })} erro={errors.p_email} />
+                          required: 'E-mail pessoal é obrigatório',
+                          pattern: {
+                            value: emailPattern,
+                            message: 'Digite um e-mail válido',
+                          },
+                        })}
+                        erro={errors.p_email}
+                      />
                     </FormGroup>
                     <FormGroup label="E-mail corporativo (opcional)" htmlFor="co_email">
                       <CampoEntrada id="co_email" type="email" placeholder="nome@instituicao.gov.br" className={fieldClass}
